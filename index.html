@@ -3,12 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>B&R — Balloon Type v2</title>
+
+    <title>B&R Balloon Type</title>
+
     <style>
       :root {
-        --bg: #f2ede3;
-        --orange: #e86f3d;
-        --ink: #173d3d;
+        --bg: #f5f4ef;
+        --text: #35d0d4;
       }
 
       * {
@@ -17,172 +18,167 @@
 
       html,
       body {
-        width: 100%;
-        height: 100%;
         margin: 0;
-        overflow: hidden;
+        min-height: 220vh;
         background: var(--bg);
-        font-family:
-          Inter,
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          sans-serif;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      body {
+        overflow-x: hidden;
+      }
+
+      .scroll-space {
+        height: 220vh;
+        width: 1px;
+        pointer-events: none;
+      }
+
+      /* --------------------------------------------------
+         BACKGROUND TYPOGRAPHY
+      -------------------------------------------------- */
+
+      .background-type {
+        position: fixed;
+        inset: -8vh -8vw;
+        z-index: 0;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+
+        pointer-events: none;
+        user-select: none;
+
+        overflow: hidden;
+      }
+
+      .background-row {
+        display: flex;
+        white-space: nowrap;
+
+        font-size: clamp(5rem, 11vw, 13rem);
+        line-height: 0.78;
+        font-weight: 900;
+        letter-spacing: -0.07em;
+
+        color: rgba(53, 208, 212, 0.075);
+
+        transform: translateX(-3%);
+      }
+
+      .background-row:nth-child(even) {
+        transform: translateX(-18%);
+      }
+
+      .background-row span {
+        display: inline-block;
+        margin-right: 0.18em;
+      }
+
+      /* --------------------------------------------------
+         THREE.JS
+      -------------------------------------------------- */
+
+      #scene {
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+
+        pointer-events: none;
       }
 
       canvas {
         display: block;
         width: 100%;
         height: 100%;
-        touch-action: none;
-        cursor: grab;
       }
 
-      canvas.dragging {
-        cursor: grabbing;
-      }
+      /* --------------------------------------------------
+         HUD
+      -------------------------------------------------- */
 
-      .background-type {
-        position: fixed;
-        inset: -20%;
-        z-index: 0;
-
-        display: flex;
-        flex-direction: column;
-        justify-content: space-around;
-
-        overflow: hidden;
-        pointer-events: none;
-        user-select: none;
-
-        color: var(--orange);
-        opacity: 0.9;
-
-        font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
-
-        font-size: clamp(90px, 13vw, 220px);
-        font-weight: 900;
-        line-height: 0.78;
-        letter-spacing: -0.045em;
-
-        transform: rotate(-7deg) scale(1.1);
-      }
-
-      .background-row {
-        display: flex;
-        flex-shrink: 0;
-        white-space: nowrap;
-        gap: 0.15em;
-      }
-
-      .background-row span {
-        display: block;
-        flex-shrink: 0;
-      }
-
-      .background-type div {
-        position: absolute;
-        white-space: nowrap;
-        font-size: clamp(90px, 13vw, 220px);
-      }
-
-      .background-type .a {
-        top: 5%;
-        left: -7%;
-      }
-
-      .background-type .b {
-        top: 25%;
-        left: -16%;
-      }
-
-      .background-type .c {
-        top: 45%;
-        left: -3%;
-      }
-
-      .background-type .d {
-        top: 65%;
-        left: -18%;
-      }
-
-      .background-type .e {
-        top: 84%;
-        left: -5%;
-      }
-
-      #scene {
-        position: fixed;
-        inset: 0;
-        z-index: 1;
-      }
       .hud {
         position: fixed;
-        z-index: 5;
-        left: 24px;
-        bottom: 22px;
+        left: 50%;
+        bottom: 24px;
+        transform: translateX(-50%);
+
+        z-index: 20;
 
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
 
-        padding: 6px 6px 6px 14px;
+        padding: 10px 12px 10px 16px;
 
-        border: 1px solid rgba(23, 61, 61, 0.12);
+        color: #182426;
+        background: rgba(255, 255, 255, 0.68);
+
+        border: 1px solid rgba(24, 36, 38, 0.08);
         border-radius: 999px;
 
-        background: rgba(255, 255, 255, 0.46);
-        backdrop-filter: blur(12px);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
 
-        color: var(--ink);
         font-size: 12px;
-        letter-spacing: 0.02em;
+        letter-spacing: 0.01em;
+
+        white-space: nowrap;
       }
 
       .hud button {
         border: 0;
-        border-radius: 999px;
         padding: 7px 12px;
 
-        background: var(--ink);
-        color: white;
+        border-radius: 999px;
+
+        background: #35d0d4;
+        color: #07383a;
 
         font: inherit;
-        font-weight: 600;
+        font-weight: 700;
 
         cursor: pointer;
 
         transition:
-          transform 0.15s ease,
-          opacity 0.15s ease;
+          transform 160ms ease,
+          filter 160ms ease;
       }
 
       .hud button:hover {
-        opacity: 0.85;
+        filter: brightness(1.05);
         transform: translateY(-1px);
       }
 
       .hud button:active {
         transform: translateY(0);
       }
+
+      /* --------------------------------------------------
+         LOADING
+      -------------------------------------------------- */
+
       .loading {
         position: fixed;
         inset: 0;
-        z-index: 20;
+
+        z-index: 100;
 
         display: grid;
         place-items: center;
 
         background: var(--bg);
-        color: var(--ink);
 
-        font-size: 14px;
-        font-weight: 500;
+        color: #35d0d4;
+
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
 
         transition:
-          opacity 0.35s ease,
-          visibility 0.35s ease;
+          opacity 400ms ease,
+          visibility 400ms ease;
       }
 
       .loading.hidden {
@@ -191,46 +187,72 @@
         pointer-events: none;
       }
 
+      /* --------------------------------------------------
+         ERROR
+      -------------------------------------------------- */
+
       .error {
         position: fixed;
-        z-index: 30;
-
         left: 50%;
         top: 50%;
 
-        width: min(680px, calc(100vw - 40px));
+        z-index: 200;
 
         transform: translate(-50%, -50%);
 
-        padding: 22px;
+        max-width: min(90vw, 600px);
+
+        padding: 20px;
 
         border-radius: 18px;
 
-        background: white;
-        color: #7d251c;
+        background: #171d1e;
+        color: white;
 
-        box-shadow: 0 20px 80px rgba(0, 0, 0, 0.15);
+        font-family: monospace;
+        font-size: 13px;
 
-        font:
-          13px/1.55 ui-monospace,
-          SFMono-Regular,
-          Menlo,
-          monospace;
+        white-space: pre-wrap;
 
         display: none;
-        white-space: pre-wrap;
-      }
-      .background-type {
-        z-index: 0;
       }
 
-      #scene {
-        z-index: 1;
+      .error.visible {
+        display: block;
+      }
+
+      /* --------------------------------------------------
+         DRAG
+      -------------------------------------------------- */
+
+      body.dragging {
+        cursor: grabbing;
+      }
+
+      @media (max-width: 700px) {
+        .hud {
+          max-width: calc(100vw - 24px);
+          font-size: 10px;
+        }
+
+        .hud button {
+          flex-shrink: 0;
+        }
       }
     </style>
   </head>
+
   <body>
+    <div class="scroll-space"></div>
+
+    <!-- BACKGROUND -->
     <div class="background-type" aria-hidden="true">
+      <div class="background-row">
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+      </div>
+
       <div class="background-row">
         <span>RECREACIÓN</span>
         <span>RECREACIÓN</span>
@@ -277,413 +299,1061 @@
     <div id="scene"></div>
 
     <div class="hud">
-      <span>Arrastrá B, &amp; o R · gravedad 0 · soltá para que floten</span>
+      <span> Arrastrá B, &amp; o R · gravedad 0 · soltá para que vuelvan </span>
+
       <button id="resetButton" type="button">Restaurar</button>
     </div>
+
     <div id="loading" class="loading">Inflando B&amp;R…</div>
+
     <div id="error" class="error"></div>
+
     <script type="importmap">
       {
         "imports": {
           "three": "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js",
-          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/",
+          "@dimforge/rapier3d-compat": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.14.0/rapier3d-compat.js"
         }
       }
     </script>
+
     <script type="module">
       import * as THREE from "three";
+      import RAPIER from "@dimforge/rapier3d-compat";
+
       import { FontLoader } from "three/addons/loaders/FontLoader.js";
       import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
-      import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
       import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
-      import * as RAPIER from "https://esm.sh/@dimforge/rapier3d-compat@0.12.0";
-      const FONT_URL = "./fonts/Arial Rounded MT.json";
-      const BALLOON_COLOR = 0x2dc9c8;
-      const sceneRoot = document.querySelector("#scene"),
-        loading = document.querySelector("#loading"),
-        errorBox = document.querySelector("#error");
-      let scene,
-        camera,
-        renderer,
-        world,
-        letters = [],
-        dragged = null,
-        wallBodies = {}; // <-- NUEVA VARIABLE
-      const raycaster = new THREE.Raycaster(),
-        pointer = new THREE.Vector2(),
-        dragPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0),
-        dragPoint = new THREE.Vector3(),
-        dragOffset = new THREE.Vector3(),
-        timer = new THREE.Timer();
+
+      /* ==================================================
+         CONFIG
+      ================================================== */
+
+      const FONT_URL =
+        "https://threejs.org/examples/fonts/helvetiker_bold.typeface.json";
+
+      const LETTER_COLOR = 0x35d0d4;
+
+      const RETURN_SPEED = 3.5;
+
+      const INTRO_SCROLL_DISTANCE = 0.9;
+
+      const LETTER_DEPTH = 0.24;
+
+      let introComplete = false;
+      let introProgress = 0;
+
+      /* ==================================================
+         GLOBALS
+      ================================================== */
+
+      let scene;
+      let camera;
+      let renderer;
+      let world;
+      let font;
+      let timer;
+
+      let boundaryBodies = [];
+
+      const letters = [];
+
+      let dragged = null;
+      let dragPlane = null;
+
+      /* ==================================================
+         DOM
+      ================================================== */
+
+      const sceneElement = document.getElementById("scene");
+      const loading = document.getElementById("loading");
+      const errorElement = document.getElementById("error");
+      const resetButton = document.getElementById("resetButton");
+
+      /* ==================================================
+         UTILS
+      ================================================== */
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
 
       function showError(error) {
-        console.error("Error iniciando B&R:", error);
+        console.error(error);
 
-        loading.classList.add("hidden");
+        errorElement.textContent =
+          error?.stack || error?.message || String(error);
 
-        errorBox.textContent =
-          "No se pudo iniciar la demo.\n\n" +
-          (error?.stack || error?.message || String(error));
-
-        errorBox.style.display = "block";
+        errorElement.classList.add("visible");
       }
+
+      /* ==================================================
+         BOOT
+      ================================================== */
 
       async function boot() {
         try {
           await RAPIER.init();
+
+          /* ----------------------------------------------
+             SCENE
+          ---------------------------------------------- */
+
           scene = new THREE.Scene();
+
+          /* ----------------------------------------------
+             CAMERA
+          ---------------------------------------------- */
+
           camera = new THREE.PerspectiveCamera(
             34,
-            innerWidth / innerHeight,
+            window.innerWidth / window.innerHeight,
             0.1,
             100,
           );
+
           camera.position.set(0, 0.15, 9.2);
+
           camera.lookAt(0, 0, 0);
+
+          /* ----------------------------------------------
+             RENDERER
+          ---------------------------------------------- */
+
           renderer = new THREE.WebGLRenderer({
             antialias: true,
             alpha: true,
             powerPreference: "high-performance",
           });
-          renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-          renderer.setSize(innerWidth, innerHeight);
+
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+          renderer.setSize(window.innerWidth, window.innerHeight);
+
           renderer.outputColorSpace = THREE.SRGBColorSpace;
+
           renderer.toneMapping = THREE.ACESFilmicToneMapping;
-          renderer.toneMappingExposure = 0.8;
-          sceneRoot.appendChild(renderer.domElement);
-          const pmrem = new THREE.PMREMGenerator(renderer),
-            environment = new RoomEnvironment();
-          scene.environment = pmrem.fromScene(environment, 0.04).texture;
-          environment.dispose();
-          pmrem.dispose();
-          const key = new THREE.DirectionalLight(0xffffff, 2.6);
-          key.position.set(-3, 5, 6);
-          scene.add(key);
-          const fill = new THREE.DirectionalLight(0xbefafa, 1.4);
-          fill.position.set(5, 1, 3);
-          scene.add(fill);
-          const rim = new THREE.PointLight(0xffffff, 24, 16, 2);
-          rim.position.set(0, 3.5, 4.5);
-          scene.add(rim);
-          world = new RAPIER.World({ x: 0, y: 0, z: 0 });
+          renderer.toneMappingExposure = 1.15;
+
+          sceneElement.appendChild(renderer.domElement);
+
+          /* ----------------------------------------------
+             LIGHTING
+          ---------------------------------------------- */
+
+          const hemisphereLight = new THREE.HemisphereLight(
+            0xffffff,
+            0x8fbfc2,
+            2.2,
+          );
+
+          scene.add(hemisphereLight);
+
+          /*
+           * Main softbox.
+           * Esto genera el highlight principal
+           * sobre las letras.
+           */
+
+          const keyLight = new THREE.DirectionalLight(0xffffff, 4.5);
+
+          keyLight.position.set(-3, 5, 6);
+
+          scene.add(keyLight);
+
+          /*
+           * Fill light cyan.
+           */
+
+          const fillLight = new THREE.DirectionalLight(0xbffcff, 2.0);
+
+          fillLight.position.set(4, 1, 4);
+
+          scene.add(fillLight);
+
+          /*
+           * Rim light.
+           */
+
+          const rimLight = new THREE.DirectionalLight(0xffffff, 2.5);
+
+          rimLight.position.set(0, -2, -3);
+
+          scene.add(rimLight);
+
+          /* ----------------------------------------------
+             PHYSICS
+          ---------------------------------------------- */
+
+          world = new RAPIER.World({
+            x: 0,
+            y: 0,
+            z: 0,
+          });
+
           setupBoundaryWalls();
-          const font = await new FontLoader().loadAsync(FONT_URL);
+
+          /* ----------------------------------------------
+             FONT
+          ---------------------------------------------- */
+
+          const loader = new FontLoader();
+
+          font = await loader.loadAsync(FONT_URL);
+
+          /* ----------------------------------------------
+             LETTERS
+          ---------------------------------------------- */
+
           const specs = [
-            { text: "B", x: -1.2, y: 0.05, z: 0, rot: -0.06, scale: 0.6 },
-            { text: "&", x: 0, y: -0.02, z: 0.03, rot: 0.04, scale: 0.5 },
-            { text: "R", x: 1.2, y: 0.02, z: 0, rot: 0.07, scale: 0.6 },
+            {
+              text: "B",
+              x: -1.2,
+              y: 0,
+              z: 0,
+              rot: -0.06,
+              scale: 0.6,
+            },
+
+            {
+              text: "&",
+              x: 0,
+              y: 0,
+              z: 0.03,
+              rot: 0.04,
+              scale: 0.5,
+            },
+
+            {
+              text: "R",
+              x: 1.2,
+              y: 0,
+              z: 0,
+              rot: 0.07,
+              scale: 0.6,
+            },
           ];
-          for (const spec of specs) createLetter(font, spec);
+
+          for (const spec of specs) {
+            createLetter(font, spec);
+          }
+
+          updateDockPositions();
+
+          /*
+           * Inicialmente están juntas en el centro.
+           */
+
+          setIntroPosition(0);
+
+          /* ----------------------------------------------
+             INPUT
+          ---------------------------------------------- */
+
           setupPointerEvents();
-          addEventListener("resize", onResize);
+
+          /* ----------------------------------------------
+             EVENTS
+          ---------------------------------------------- */
+
+          window.addEventListener("resize", onResize);
+
+          window.addEventListener("scroll", onScroll, {
+            passive: true,
+          });
+
+          resetButton.addEventListener("click", () => {
+            window.location.reload();
+          });
+
+          /* ----------------------------------------------
+             READY
+          ---------------------------------------------- */
+
           loading.classList.add("hidden");
+
+          timer = new THREE.Timer();
+
           animate();
         } catch (error) {
           showError(error);
         }
       }
-      function createMaterial() {
-        return new THREE.MeshPhysicalMaterial({
-          color: 0x22c5c4, // El color exacto
-          roughness: 0.35, // Más rugosidad para retener el pigmento base
-          metalness: 0.05,
-          clearcoat: 0.3, // Menos brillo plástico superior
-          clearcoatRoughness: 0.2,
-          envMapIntensity: 0.5, // Clave: evita que el entorno blanco "lave" el color
-          transmission: 0.05,
-        });
-      }
+
+      /* ==================================================
+         LETTER CREATION
+      ================================================== */
+
       function createLetter(font, spec) {
-        // 1. Crear la geometría del texto original
-        const textGeo = new TextGeometry(spec.text, {
-          font: font,
-          size: spec.scale,
-          depth: 0.2, // Grosor de la extrusión
-          curveSegments: 12, // Suavizado de las curvas
+        /*
+         * Más curveSegments + bevelSegments =
+         * curvas mucho más suaves.
+         */
+
+        const textGeometry = new TextGeometry(spec.text, {
+          font,
+
+          size: 1,
+
+          depth: LETTER_DEPTH,
+
+          curveSegments: 24,
+
           bevelEnabled: true,
-          bevelThickness: 0.08,
-          bevelSize: 0.04,
+
+          /*
+           * Este es el cambio más importante
+           * para conseguir el aspecto inflado.
+           */
+
+          bevelThickness: 0.085,
+
+          bevelSize: 0.065,
+
           bevelOffset: 0,
-          bevelSegments: 10, // Segmentos del biselado
-        }); // 2. FUSIONAR VÉRTICES DUPLICADOS
-        // Centramos primero para que el cálculo y el pivote físico coincidan en el medio
-        textGeo.center(); // Guardamos la referencia optimizada de la geometría fusionada
-        const optimizedGeo = mergeVertices(textGeo, 1e-4); // Opcional: Recalcular las normales para que la iluminación se suavice perfectamente en las uniones
-        optimizedGeo.computeVertexNormals();
-        optimizedGeo.computeBoundingBox(); // 3. Crear la malla visual, ubicada en la posición del spec
-        const material = createMaterial();
-        const mesh = new THREE.Mesh(optimizedGeo, material);
-        mesh.position.set(spec.x, spec.y, spec.z);
+
+          bevelSegments: 12,
+        });
+
+        textGeometry.center();
+
+        /*
+         * Suavizamos la geometría.
+         */
+
+        let optimizedGeometry = mergeVertices(textGeometry, 1e-4);
+
+        optimizedGeometry.computeVertexNormals();
+
+        /*
+         * Material físico glossy.
+         */
+
+        const material = new THREE.MeshPhysicalMaterial({
+          color: LETTER_COLOR,
+
+          /*
+           * No queremos aspecto metálico.
+           */
+
+          metalness: 0.0,
+
+          /*
+           * Muy poca rugosidad =
+           * superficie brillante.
+           */
+
+          roughness: 0.1,
+
+          /*
+           * Capa transparente tipo barniz.
+           */
+
+          clearcoat: 1.0,
+
+          clearcoatRoughness: 0.05,
+
+          reflectivity: 0.8,
+
+          /*
+           * Suave highlight de superficie.
+           */
+
+          sheen: 0.15,
+
+          sheenColor: new THREE.Color(0x9fffff),
+
+          sheenRoughness: 0.15,
+        });
+
+        const mesh = new THREE.Mesh(optimizedGeometry, material);
+
+        mesh.scale.setScalar(spec.scale);
+
+        mesh.position.set(0, 0, spec.z);
+
         mesh.rotation.z = spec.rot;
-        scene.add(mesh); // 4. Configurar el cuerpo rígido en Rapier3D basándose en la nueva geometría
-        // Half-extents locales (la geo ya está centrada por textGeo.center())
-        const box = optimizedGeo.boundingBox;
-        const hx = Math.max((box.max.x - box.min.x) / 2, 0.05);
-        const hy = Math.max((box.max.y - box.min.y) / 2, 0.05);
-        const hz = Math.max((box.max.z - box.min.z) / 2, 0.05);
-        const initialQuat = new THREE.Quaternion().setFromEuler(
-          new THREE.Euler(0, 0, spec.rot),
+
+        /*
+         * Sombras visuales mediante iluminación.
+         */
+
+        mesh.castShadow = false;
+        mesh.receiveShadow = false;
+
+        scene.add(mesh);
+
+        /* ----------------------------------------------
+           PHYSICS BODY
+        ---------------------------------------------- */
+
+        const initialQuaternion = new THREE.Quaternion();
+
+        initialQuaternion.setFromAxisAngle(
+          new THREE.Vector3(0, 0, 1),
+          spec.rot,
         );
+
         const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
-          .setTranslation(spec.x, spec.y, spec.z)
-          .setRotation({
-            x: initialQuat.x,
-            y: initialQuat.y,
-            z: initialQuat.z,
-            w: initialQuat.w,
-          }) // Damping tipo "globo": frena solo, sin gravedad que lo devuelva
+          .setTranslation(0, 0, spec.z)
+          .setRotation(initialQuaternion)
           .setLinearDamping(0.7)
-          .setAngularDamping(0.9) // Evita que un arrastre rápido atraviese las paredes en un solo frame
-          .setCcdEnabled(true) // Clave: sin esto, un choque le mete rotación/velocidad en X o Y,
-          // la letra se acerca a cámara (por eso parece "agrandarse") y sale
-          // de las paredes, que solo cubren el plano z≈0. Lo dejamos 2D puro:
-          // se traslada en X/Y pero nunca en Z, y solo puede girar sobre Z.
+          .setAngularDamping(0.9)
+          .setCcdEnabled(true)
           .enabledTranslations(true, true, false)
           .enabledRotations(false, false, true);
-        const body = world.createRigidBody(bodyDesc); // Collider redondeado: colisiones más suaves y "infladas" que una caja dura
-        const colliderDesc = RAPIER.ColliderDesc.roundCuboid(hx, hy, hz, 0.06)
+
+        const body = world.createRigidBody(bodyDesc);
+
+        /*
+         * Collider ligeramente redondeado.
+         */
+
+        const colliderDesc = RAPIER.ColliderDesc.roundCuboid(
+          0.48,
+          0.62,
+          0.13,
+          0.12,
+        )
           .setDensity(0.2)
           .setRestitution(0.55)
           .setFriction(0.15);
-        world.createCollider(colliderDesc, body); // 5. Vincular mesh + body en un único registro, y exponerlo al raycaster
+
+        world.createCollider(colliderDesc, body);
+
+        /* ----------------------------------------------
+           ITEM
+        ---------------------------------------------- */
+
         const item = {
+          text: spec.text,
+
           mesh,
+
           body,
+
           isDragging: false,
+
+          isReturning: false,
+
+          dockPosition: new THREE.Vector3(),
+
           previousDragPoint: new THREE.Vector3(),
-          target: new THREE.Vector3(),
+
           dragVelocity: new THREE.Vector3(),
+
+          halfWidth: 0.48,
+
+          halfHeight: 0.62,
+
+          returnSpeed: RETURN_SPEED,
         };
-        mesh.userData.letter = item;
+
         letters.push(item);
       }
 
+      /* ==================================================
+         VIEWPORT
+      ================================================== */
+
       function getViewportBounds() {
         const distance = camera.position.z;
-        const vFov = THREE.MathUtils.degToRad(camera.fov);
 
-        const height = 2 * Math.tan(vFov / 2) * distance;
+        const verticalFov = THREE.MathUtils.degToRad(camera.fov);
+
+        const height = 2 * Math.tan(verticalFov / 2) * distance;
+
         const width = height * camera.aspect;
 
         return {
           left: -width / 2,
           right: width / 2,
+
           bottom: -height / 2,
           top: height / 2,
         };
       }
-      function setupPointerEvents() {
-        const canvas = renderer.domElement;
-        canvas.addEventListener("pointerdown", onPointerDown);
-        canvas.addEventListener("pointermove", onPointerMove);
-        canvas.addEventListener("pointerup", onPointerUp);
-        canvas.addEventListener("pointercancel", onPointerUp);
-        canvas.addEventListener("pointerleave", onPointerUp);
-        canvas.addEventListener("dblclick", onDoubleClick);
 
-        document.querySelector("#resetButton").addEventListener("click", () => {
-          window.location.reload();
-        });
-      }
-      function updatePointer(event) {
-        const rect = renderer.domElement.getBoundingClientRect();
-        pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-      }
-      function pickLetter(event) {
-        updatePointer(event);
-        raycaster.setFromCamera(pointer, camera);
-        const hits = raycaster.intersectObjects(
-          letters.map((item) => item.mesh),
-          false,
-        );
-        return hits.length ? (hits[0].object.userData.letter ?? null) : null;
-      }
-      function onDoubleClick(event) {
-        const item = pickLetter(event);
-        if (!item) return; // Reseteamos la rotación del cuerpo físico para que mire completamente de frente (quaternion neutro)
-        item.body.setRotation({ x: 0, y: 0, z: 0, w: 1 }, true); // Frenamos cualquier giro o velocidad de rotación que tuviera
-        item.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
-      }
-      function onPointerDown(event) {
-        const item = pickLetter(event);
-        if (!item) return;
-        dragged = item;
-        dragged.isDragging = true;
-        dragPlane.constant = -item.mesh.position.z;
-        if (raycaster.ray.intersectPlane(dragPlane, dragPoint)) {
-          dragOffset.copy(item.mesh.position).sub(dragPoint);
-          item.previousDragPoint.copy(dragPoint);
-          item.target.copy(item.mesh.position);
-        } // Dejamos el cuerpo dinámico pero sin velocidad ni gravedad para controlarlo por fuerza
-        item.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
-        item.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
-        item.dragVelocity.set(0, 0, 0);
-        renderer.domElement.classList.add("dragging");
-        renderer.domElement.setPointerCapture?.(event.pointerId);
-      }
-      function onPointerMove(event) {
-        if (!dragged) return;
-        updatePointer(event);
-        raycaster.setFromCamera(pointer, camera);
-        if (!raycaster.ray.intersectPlane(dragPlane, dragPoint)) return;
-        const next = dragPoint.clone().add(dragOffset);
-        next.z = 0; // Calculamos la delta de movimiento para la inercia al soltar
-        const delta = next.clone().sub(dragged.previousDragPoint);
-        dragged.dragVelocity.lerp(delta.multiplyScalar(50), 0.4);
-        dragged.previousDragPoint.copy(next); // Movemos el cuerpo físico usando velocidad hacia el objetivo (respeta colisiones)
-        const currentPos = dragged.body.translation();
-        const vx = (next.x - currentPos.x) * 20;
-        const vy = (next.y - currentPos.y) * 20;
-        dragged.body.setLinvel({ x: vx, y: vy, z: 0 }, true);
-        dragged.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
-      }
-      function onPointerUp(event) {
-        if (!dragged) return;
-        dragged.isDragging = false;
-        dragged.body.setLinvel(
-          {
-            x: THREE.MathUtils.clamp(dragged.dragVelocity.x, -4.5, 4.5),
-            y: THREE.MathUtils.clamp(dragged.dragVelocity.y, -4.5, 4.5),
-            z: 0,
-          },
-          true,
-        );
-        dragged = null;
-        renderer.domElement.releasePointerCapture?.(event.pointerId);
-        renderer.domElement.classList.remove("dragging");
-      }
-      function syncPhysics() {
+      /* ==================================================
+         DOCK POSITIONS
+      ================================================== */
+
+      function updateDockPositions() {
+        const bounds = getViewportBounds();
+
+        /*
+         * Las letras quedan arriba,
+         * dejando espacio para que no toquen
+         * el borde.
+         */
+
+        const topMargin = 0.55;
+
+        const dockY = bounds.top - topMargin;
+
+        const positions = {
+          B: -1.2,
+          "&": 0,
+          R: 1.2,
+        };
+
         for (const item of letters) {
-          // Si el elemento no existe o su body es null, lo salteamos sin tirar error
-          if (!item || !item.body) continue;
-          const translation = item.body.translation();
-          const rotation = item.body.rotation();
-          if (item.mesh) {
-            item.mesh.position.set(translation.x, translation.y, translation.z);
-            item.mesh.quaternion.set(
-              rotation.x,
-              rotation.y,
-              rotation.z,
-              rotation.w,
-            );
-          }
+          item.dockPosition.set(positions[item.text] ?? 0, dockY, 0);
         }
       }
-      function updateBoundaryWalls() {
-        if (!wallBodies.left) return;
 
-        const bounds = getViewportBounds();
+      /* ==================================================
+         INTRO
+      ================================================== */
 
-        const thickness = 0.5;
+      function setIntroPosition(progress) {
+        progress = clamp(progress, 0, 1);
 
-        wallBodies.left.setTranslation(
-          {
-            x: bounds.left - thickness / 2,
-            y: 0,
-            z: 0,
-          },
-          true,
-        );
+        introProgress = progress;
 
-        wallBodies.right.setTranslation(
-          {
-            x: bounds.right + thickness / 2,
-            y: 0,
-            z: 0,
-          },
-          true,
-        );
+        /*
+         * Posición inicial:
+         *
+         *       B & R
+         *      juntas
+         *     en centro
+         */
 
-        wallBodies.top.setTranslation(
-          {
-            x: 0,
-            y: bounds.top + thickness / 2,
-            z: 0,
-          },
-          true,
-        );
+        for (const item of letters) {
+          let startX = 0;
 
-        wallBodies.bottom.setTranslation(
-          {
-            x: 0,
-            y: bounds.bottom - thickness / 2,
-            z: 0,
-          },
-          true,
-        );
-      }
-      function setupBoundaryWalls() {
-        const bounds = getViewportBounds();
+          if (item.text === "B") {
+            startX = -0.55;
+          } else if (item.text === "R") {
+            startX = 0.55;
+          }
 
-        const thickness = 0.5;
+          const x = THREE.MathUtils.lerp(startX, item.dockPosition.x, progress);
 
-        const walls = [
-          {
-            id: "left",
-            x: bounds.left - thickness / 2,
-            y: 0,
-            hx: thickness / 2,
-            hy: Math.abs(bounds.top - bounds.bottom) / 2 + thickness,
-          },
-          {
-            id: "right",
-            x: bounds.right + thickness / 2,
-            y: 0,
-            hx: thickness / 2,
-            hy: Math.abs(bounds.top - bounds.bottom) / 2 + thickness,
-          },
-          {
-            id: "top",
-            x: 0,
-            y: bounds.top + thickness / 2,
-            hx: Math.abs(bounds.right - bounds.left) / 2 + thickness,
-            hy: thickness / 2,
-          },
-          {
-            id: "bottom",
-            x: 0,
-            y: bounds.bottom - thickness / 2,
-            hx: Math.abs(bounds.right - bounds.left) / 2 + thickness,
-            hy: thickness / 2,
-          },
-        ];
+          const y = THREE.MathUtils.lerp(0, item.dockPosition.y, progress);
 
-        for (const w of walls) {
-          const bodyDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(
-            w.x,
-            w.y,
-            0,
+          item.body.setTranslation(
+            {
+              x,
+              y,
+              z: 0,
+            },
+            true,
           );
 
-          const body = world.createRigidBody(bodyDesc);
+          item.body.setLinvel(
+            {
+              x: 0,
+              y: 0,
+              z: 0,
+            },
+            true,
+          );
 
-          const colliderDesc = RAPIER.ColliderDesc.cuboid(w.hx, w.hy, 10)
-            .setRestitution(0.6)
-            .setFriction(0.2);
-
-          world.createCollider(colliderDesc, body);
-
-          wallBodies[w.id] = body;
+          item.body.setAngvel(
+            {
+              x: 0,
+              y: 0,
+              z: 0,
+            },
+            true,
+          );
         }
       }
-      function animate() {
-        requestAnimationFrame(animate);
-        timer.update();
-        const delta = Math.min(timer.getDelta(), 0.1); // Evita saltos bruscos si baja el framerate
-        // Avanzar el motor de físicas Rapier
-        world.timestep = delta;
-        world.step(); // Sincronizar mallas visuales de Three con la física calculada
-        syncPhysics();
-        renderer.render(scene, camera);
+
+      function onScroll() {
+        if (introComplete) {
+          return;
+        }
+
+        const scroll = window.scrollY || 0;
+
+        const distance = Math.max(
+          window.innerHeight * INTRO_SCROLL_DISTANCE,
+          1,
+        );
+
+        const rawProgress = clamp(scroll / distance, 0, 1);
+
+        /*
+         * Ease-out:
+         * empieza rápido y desacelera
+         * al llegar arriba.
+         */
+
+        const easedProgress = 1 - Math.pow(1 - rawProgress, 3);
+
+        setIntroPosition(easedProgress);
+
+        if (rawProgress >= 1) {
+          finishIntro();
+        }
       }
-      function onResize() {
-        camera.aspect = innerWidth / innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(innerWidth, innerHeight);
-        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+      function finishIntro() {
+        introComplete = true;
+
+        introProgress = 1;
+
+        updateDockPositions();
+
+        for (const item of letters) {
+          if (item.isDragging) {
+            continue;
+          }
+
+          const p = item.dockPosition;
+
+          item.body.setTranslation(
+            {
+              x: p.x,
+              y: p.y,
+              z: 0,
+            },
+            true,
+          );
+
+          item.body.setLinvel(
+            {
+              x: 0,
+              y: 0,
+              z: 0,
+            },
+            true,
+          );
+
+          item.body.setAngvel(
+            {
+              x: 0,
+              y: 0,
+              z: 0,
+            },
+            true,
+          );
+
+          item.isReturning = false;
+        }
+      }
+
+      /* ==================================================
+         BOUNDARIES
+      ================================================== */
+
+      function setupBoundaryWalls() {
         updateBoundaryWalls();
       }
+
+      function updateBoundaryWalls() {
+        for (const body of boundaryBodies) {
+          world.removeRigidBody(body);
+        }
+
+        boundaryBodies = [];
+
+        const bounds = getViewportBounds();
+
+        const thickness = 0.3;
+
+        /*
+         * LEFT
+         */
+
+        createWall(
+          bounds.left - thickness,
+          0,
+          thickness,
+          bounds.top + thickness,
+        );
+
+        /*
+         * RIGHT
+         */
+
+        createWall(
+          bounds.right + thickness,
+          0,
+          thickness,
+          bounds.top + thickness,
+        );
+
+        /*
+         * TOP
+         */
+
+        createWall(
+          0,
+          bounds.top + thickness,
+          bounds.right + thickness,
+          thickness,
+        );
+
+        /*
+         * BOTTOM
+         */
+
+        createWall(
+          0,
+          bounds.bottom - thickness,
+          bounds.right + thickness,
+          thickness,
+        );
+      }
+
+      function createWall(x, y, halfWidth, halfHeight) {
+        const bodyDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(x, y, 0);
+
+        const body = world.createRigidBody(bodyDesc);
+
+        const collider = RAPIER.ColliderDesc.cuboid(halfWidth, halfHeight)
+          .setRestitution(0.65)
+          .setFriction(0.15);
+
+        world.createCollider(collider, body);
+
+        boundaryBodies.push(body);
+      }
+
+      /* ==================================================
+         POINTER
+      ================================================== */
+
+      function setupPointerEvents() {
+        renderer.domElement.addEventListener("pointerdown", onPointerDown);
+
+        renderer.domElement.addEventListener("pointermove", onPointerMove);
+
+        renderer.domElement.addEventListener("pointerup", onPointerUp);
+
+        renderer.domElement.addEventListener("pointercancel", onPointerUp);
+      }
+
+      function getPointerPosition(event) {
+        const rect = renderer.domElement.getBoundingClientRect();
+
+        const ndc = new THREE.Vector2(
+          ((event.clientX - rect.left) / rect.width) * 2 - 1,
+
+          -((event.clientY - rect.top) / rect.height) * 2 + 1,
+        );
+
+        const raycaster = new THREE.Raycaster();
+
+        raycaster.setFromCamera(ndc, camera);
+
+        /*
+         * Intersección con plano Z = 0.
+         */
+
+        if (!dragPlane) {
+          dragPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+        }
+
+        const point = new THREE.Vector3();
+
+        raycaster.ray.intersectPlane(dragPlane, point);
+
+        return point;
+      }
+
+      function pickLetter(event) {
+        const rect = renderer.domElement.getBoundingClientRect();
+
+        const mouse = new THREE.Vector2(
+          ((event.clientX - rect.left) / rect.width) * 2 - 1,
+
+          -((event.clientY - rect.top) / rect.height) * 2 + 1,
+        );
+
+        const raycaster = new THREE.Raycaster();
+
+        raycaster.setFromCamera(mouse, camera);
+
+        const meshes = letters.map((item) => item.mesh);
+
+        const intersections = raycaster.intersectObjects(meshes, false);
+
+        if (!intersections.length) {
+          return null;
+        }
+
+        const mesh = intersections[0].object;
+
+        return letters.find((item) => item.mesh === mesh) || null;
+      }
+
+      /* ==================================================
+         POINTER DOWN
+      ================================================== */
+
+      function onPointerDown(event) {
+        if (!introComplete) {
+          return;
+        }
+
+        const item = pickLetter(event);
+
+        if (!item) {
+          return;
+        }
+
+        dragged = item;
+
+        item.isDragging = true;
+
+        item.isReturning = false;
+
+        item.body.setLinvel(
+          {
+            x: 0,
+            y: 0,
+            z: 0,
+          },
+          true,
+        );
+
+        item.body.setAngvel(
+          {
+            x: 0,
+            y: 0,
+            z: 0,
+          },
+          true,
+        );
+
+        const point = getPointerPosition(event);
+
+        item.previousDragPoint.copy(point);
+
+        renderer.domElement.setPointerCapture(event.pointerId);
+
+        document.body.classList.add("dragging");
+      }
+
+      /* ==================================================
+         POINTER MOVE
+      ================================================== */
+
+      function onPointerMove(event) {
+        if (!dragged || !dragged.isDragging) {
+          return;
+        }
+
+        const point = getPointerPosition(event);
+
+        const previous = dragged.previousDragPoint;
+
+        const dx = point.x - previous.x;
+
+        const dy = point.y - previous.y;
+
+        const current = dragged.body.translation();
+
+        dragged.body.setTranslation(
+          {
+            x: current.x + dx,
+            y: current.y + dy,
+            z: 0,
+          },
+          true,
+        );
+
+        dragged.body.setLinvel(
+          {
+            x: 0,
+            y: 0,
+            z: 0,
+          },
+          true,
+        );
+
+        dragged.body.setAngvel(
+          {
+            x: 0,
+            y: 0,
+            z: 0,
+          },
+          true,
+        );
+
+        dragged.previousDragPoint.copy(point);
+      }
+
+      /* ==================================================
+         POINTER UP
+      ================================================== */
+
+      function onPointerUp(event) {
+        if (!dragged) {
+          return;
+        }
+
+        const item = dragged;
+
+        item.isDragging = false;
+
+        /*
+         * Al soltar, vuelve automáticamente
+         * a su posición superior.
+         */
+
+        item.isReturning = true;
+
+        item.body.setLinvel(
+          {
+            x: 0,
+            y: 0,
+            z: 0,
+          },
+          true,
+        );
+
+        item.body.setAngvel(
+          {
+            x: 0,
+            y: 0,
+            z: 0,
+          },
+          true,
+        );
+
+        dragged = null;
+
+        document.body.classList.remove("dragging");
+
+        try {
+          renderer.domElement.releasePointerCapture(event.pointerId);
+        } catch {}
+      }
+
+      /* ==================================================
+         RETURN ANIMATION
+      ================================================== */
+
+      function updateReturningLetters(delta) {
+        if (!introComplete) {
+          return;
+        }
+
+        for (const item of letters) {
+          if (!item.isReturning || item.isDragging) {
+            continue;
+          }
+
+          const current = item.body.translation();
+
+          const target = item.dockPosition;
+
+          const dx = target.x - current.x;
+
+          const dy = target.y - current.y;
+
+          const distance = Math.hypot(dx, dy);
+
+          if (distance < 0.025) {
+            item.body.setTranslation(
+              {
+                x: target.x,
+                y: target.y,
+                z: 0,
+              },
+              true,
+            );
+
+            item.body.setLinvel(
+              {
+                x: 0,
+                y: 0,
+                z: 0,
+              },
+              true,
+            );
+
+            item.isReturning = false;
+
+            continue;
+          }
+
+          item.body.setLinvel(
+            {
+              x: (dx / distance) * item.returnSpeed,
+
+              y: (dy / distance) * item.returnSpeed,
+
+              z: 0,
+            },
+            true,
+          );
+        }
+      }
+
+      /* ==================================================
+         PHYSICS → THREE
+      ================================================== */
+
+      function syncPhysics() {
+        for (const item of letters) {
+          const translation = item.body.translation();
+
+          const rotation = item.body.rotation();
+
+          item.mesh.position.set(translation.x, translation.y, translation.z);
+
+          item.mesh.quaternion.set(
+            rotation.x,
+            rotation.y,
+            rotation.z,
+            rotation.w,
+          );
+        }
+      }
+
+      /* ==================================================
+         RESIZE
+      ================================================== */
+
+      function onResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        updateBoundaryWalls();
+
+        updateDockPositions();
+
+        if (!introComplete) {
+          setIntroPosition(introProgress);
+        }
+      }
+
+      /* ==================================================
+         ANIMATION
+      ================================================== */
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        timer.update();
+
+        const delta = Math.min(timer.getDelta(), 0.1);
+
+        updateReturningLetters(delta);
+
+        world.timestep = delta;
+
+        world.step();
+
+        syncPhysics();
+
+        renderer.render(scene, camera);
+      }
+
+      /* ==================================================
+         START
+      ================================================== */
+
       boot();
     </script>
   </body>
