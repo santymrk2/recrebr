@@ -203,7 +203,25 @@
       .hud button:active {
         transform: translateY(0);
       }
+      .bottom-nav {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+      }
 
+      .bottom-nav a {
+        color: var(--ink);
+        text-decoration: none;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        transition: opacity 0.2s ease;
+      }
+
+      .bottom-nav a:hover {
+        opacity: 0.55;
+      }
       /*
        * ==================================================
        * LOADING
@@ -318,9 +336,12 @@
     <!-- ==================================================
          HUD
          ================================================== -->
-
     <div class="hud">
-      <span> Arrastrá B, &amp; o R · gravedad 0 · soltá para volver </span>
+      <nav class="bottom-nav" aria-label="Navegación principal">
+        <a href="#inicio">Inicio</a>
+        <a href="#nosotros">Nosotros</a>
+        <a href="#juegos">Juegos</a>
+      </nav>
 
       <button id="resetButton" type="button">Restaurar</button>
     </div>
