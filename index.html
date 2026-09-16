@@ -99,14 +99,17 @@
         inset: 0;
         z-index: 1;
       }
-
       .hud {
         position: fixed;
         z-index: 5;
         left: 24px;
         bottom: 22px;
 
-        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        padding: 6px 6px 6px 14px;
 
         border: 1px solid rgba(23, 61, 61, 0.12);
         border-radius: 999px;
@@ -117,19 +120,41 @@
         color: var(--ink);
         font-size: 12px;
         letter-spacing: 0.02em;
-
-        pointer-events: none;
       }
+
+      .hud button {
+        border: 0;
+        border-radius: 999px;
+        padding: 7px 12px;
+
+        background: var(--ink);
+        color: white;
+
+        font: inherit;
+        font-weight: 600;
+
+        cursor: pointer;
+
+        transition:
+          transform 0.15s ease,
+          opacity 0.15s ease;
+      }
+
+      .hud button:hover {
+        opacity: 0.85;
+        transform: translateY(-1px);
+      }
+
+      .hud button:active {
+        transform: translateY(0);
+      }
+
       .background-type {
-        z-index: 1;
+        z-index: 0;
       }
 
       #scene {
-        z-index: 2;
-      }
-
-      .hud {
-        z-index: 5;
+        z-index: 1;
       }
     </style>
   </head>
@@ -145,7 +170,8 @@
     <div id="scene"></div>
 
     <div class="hud">
-      Arrastrá B, &amp; o R · gravedad 0 · soltá para que floten
+      <span>Arrastrá B, &amp; o R · gravedad 0 · soltá para que floten</span>
+      <button id="resetButton" type="button">Restaurar</button>
     </div>
     <div id="loading" class="loading">Inflando B&amp;R…</div>
     <div id="error" class="error"></div>
@@ -194,7 +220,6 @@
         try {
           await RAPIER.init();
           scene = new THREE.Scene();
-          scene.background = new THREE.Color(0xf2ede3);
           camera = new THREE.PerspectiveCamera(
             34,
             innerWidth / innerHeight,
@@ -205,7 +230,7 @@
           camera.lookAt(0, 0, 0);
           renderer = new THREE.WebGLRenderer({
             antialias: true,
-            alpha: false,
+            alpha: true,
             powerPreference: "high-performance",
           });
           renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -320,6 +345,21 @@
         mesh.userData.letter = item;
         letters.push(item);
       }
+
+      function getViewportBounds() {
+        const distance = camera.position.z;
+        const vFov = THREE.MathUtils.degToRad(camera.fov);
+
+        const height = 2 * Math.tan(vFov / 2) * distance;
+        const width = height * camera.aspect;
+
+        return {
+          left: -width / 2,
+          right: width / 2,
+          bottom: -height / 2,
+          top: height / 2,
+        };
+      }
       function setupPointerEvents() {
         const canvas = renderer.domElement;
         canvas.addEventListener("pointerdown", onPointerDown);
@@ -328,6 +368,10 @@
         canvas.addEventListener("pointercancel", onPointerUp);
         canvas.addEventListener("pointerleave", onPointerUp);
         canvas.addEventListener("dblclick", onDoubleClick);
+
+        document.querySelector("#resetButton").addEventListener("click", () => {
+          window.location.reload();
+        });
       }
       function updatePointer(event) {
         const rect = renderer.domElement.getBoundingClientRect();
@@ -415,84 +459,100 @@
         }
       }
       function updateBoundaryWalls() {
-        if (!wallBodies.left) return; // Evita errores si aún no cargó físicas
-        const distance = camera.position.z;
-        const vFov = (camera.fov * Math.PI) / 180;
-        const height = 2 * Math.tan(vFov / 2) * distance;
-        const width = height * camera.aspect;
-        const hw = width * 0.44;
-        const hh = height * 0.44;
-        const thickness = 10.0;
-        // Actualizamos la posición de los cuerpos físicos en tiempo real
+        if (!wallBodies.left) return;
+
+        const bounds = getViewportBounds();
+
+        const thickness = 0.5;
+
         wallBodies.left.setTranslation(
-          { x: -hw - thickness / 2, y: 0, z: 0 },
+          {
+            x: bounds.left - thickness / 2,
+            y: 0,
+            z: 0,
+          },
           true,
         );
+
         wallBodies.right.setTranslation(
-          { x: hw + thickness / 2, y: 0, z: 0 },
+          {
+            x: bounds.right + thickness / 2,
+            y: 0,
+            z: 0,
+          },
           true,
         );
+
         wallBodies.top.setTranslation(
-          { x: 0, y: hh + thickness / 2, z: 0 },
+          {
+            x: 0,
+            y: bounds.top + thickness / 2,
+            z: 0,
+          },
           true,
         );
+
         wallBodies.bottom.setTranslation(
-          { x: 0, y: -hh - thickness / 2, z: 0 },
+          {
+            x: 0,
+            y: bounds.bottom - thickness / 2,
+            z: 0,
+          },
           true,
         );
       }
       function setupBoundaryWalls() {
-        const distance = camera.position.z;
-        const vFov = (camera.fov * Math.PI) / 180;
-        const height = 2 * Math.tan(vFov / 2) * distance;
-        const width = height * camera.aspect;
-        const hw = width * 0.44;
-        const hh = height * 0.44;
-        const thickness = 10.0; // MUCHO más grueso para evitar que lo atraviesen (tunneling)
-        // Definimos las 4 paredes con IDs
+        const bounds = getViewportBounds();
+
+        const thickness = 0.5;
+
         const walls = [
           {
             id: "left",
-            x: -hw - thickness / 2,
+            x: bounds.left - thickness / 2,
             y: 0,
             hx: thickness / 2,
-            hy: hh + thickness,
+            hy: Math.abs(bounds.top - bounds.bottom) / 2 + thickness,
           },
           {
             id: "right",
-            x: hw + thickness / 2,
+            x: bounds.right + thickness / 2,
             y: 0,
             hx: thickness / 2,
-            hy: hh + thickness,
+            hy: Math.abs(bounds.top - bounds.bottom) / 2 + thickness,
           },
           {
             id: "top",
             x: 0,
-            y: hh + thickness / 2,
-            hx: hw + thickness,
+            y: bounds.top + thickness / 2,
+            hx: Math.abs(bounds.right - bounds.left) / 2 + thickness,
             hy: thickness / 2,
           },
           {
             id: "bottom",
             x: 0,
-            y: -hh - thickness / 2,
-            hx: hw + thickness,
+            y: bounds.bottom - thickness / 2,
+            hx: Math.abs(bounds.right - bounds.left) / 2 + thickness,
             hy: thickness / 2,
           },
         ];
+
         for (const w of walls) {
-          const wallDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(
+          const bodyDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(
             w.x,
             w.y,
             0,
           );
-          const wallBody = world.createRigidBody(wallDesc);
-          // El collider ahora tiene una profundidad en Z masiva (10.0) por seguridad
-          const colliderDesc = RAPIER.ColliderDesc.cuboid(w.hx, w.hy, 10.0)
+
+          const body = world.createRigidBody(bodyDesc);
+
+          const colliderDesc = RAPIER.ColliderDesc.cuboid(w.hx, w.hy, 10)
             .setRestitution(0.6)
             .setFriction(0.2);
-          world.createCollider(colliderDesc, wallBody);
-          wallBodies[w.id] = wallBody; // Guardamos la referencia
+
+          world.createCollider(colliderDesc, body);
+
+          wallBodies[w.id] = body;
         }
       }
       function animate() {
