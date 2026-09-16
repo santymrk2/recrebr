@@ -45,22 +45,40 @@
 
       .background-type {
         position: fixed;
-        inset: 0;
+        inset: -20%;
         z-index: 0;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+
         overflow: hidden;
         pointer-events: none;
+        user-select: none;
 
         color: var(--orange);
         opacity: 0.9;
 
         font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
 
+        font-size: clamp(90px, 13vw, 220px);
         font-weight: 900;
         line-height: 0.78;
         letter-spacing: -0.045em;
 
         transform: rotate(-7deg) scale(1.1);
-        user-select: none;
+      }
+
+      .background-row {
+        display: flex;
+        flex-shrink: 0;
+        white-space: nowrap;
+        gap: 0.15em;
+      }
+
+      .background-row span {
+        display: block;
+        flex-shrink: 0;
       }
 
       .background-type div {
@@ -148,7 +166,60 @@
       .hud button:active {
         transform: translateY(0);
       }
+      .loading {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
 
+        display: grid;
+        place-items: center;
+
+        background: var(--bg);
+        color: var(--ink);
+
+        font-size: 14px;
+        font-weight: 500;
+
+        transition:
+          opacity 0.35s ease,
+          visibility 0.35s ease;
+      }
+
+      .loading.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .error {
+        position: fixed;
+        z-index: 30;
+
+        left: 50%;
+        top: 50%;
+
+        width: min(680px, calc(100vw - 40px));
+
+        transform: translate(-50%, -50%);
+
+        padding: 22px;
+
+        border-radius: 18px;
+
+        background: white;
+        color: #7d251c;
+
+        box-shadow: 0 20px 80px rgba(0, 0, 0, 0.15);
+
+        font:
+          13px/1.55 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+
+        display: none;
+        white-space: pre-wrap;
+      }
       .background-type {
         z-index: 0;
       }
@@ -160,11 +231,47 @@
   </head>
   <body>
     <div class="background-type" aria-hidden="true">
-      <div class="a">RECREACIÓN</div>
-      <div class="b">RECREACIÓN</div>
-      <div class="c">RECREACIÓN</div>
-      <div class="d">RECREACIÓN</div>
-      <div class="e">RECREACIÓN</div>
+      <div class="background-row">
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+      </div>
+
+      <div class="background-row">
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+      </div>
+
+      <div class="background-row">
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+      </div>
+
+      <div class="background-row">
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+      </div>
+
+      <div class="background-row">
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+      </div>
+
+      <div class="background-row">
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+      </div>
+
+      <div class="background-row">
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+        <span>RECREACIÓN</span>
+      </div>
     </div>
 
     <div id="scene"></div>
@@ -208,14 +315,19 @@
         dragPoint = new THREE.Vector3(),
         dragOffset = new THREE.Vector3(),
         timer = new THREE.Timer();
+
       function showError(error) {
-        console.error(error);
+        console.error("Error iniciando B&R:", error);
+
+        loading.classList.add("hidden");
+
         errorBox.textContent =
           "No se pudo iniciar la demo.\n\n" +
           (error?.stack || error?.message || String(error));
+
         errorBox.style.display = "block";
-        loading.classList.add("hidden");
       }
+
       async function boot() {
         try {
           await RAPIER.init();
