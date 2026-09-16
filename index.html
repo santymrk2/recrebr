@@ -198,6 +198,7 @@
         world,
         letters = [],
         dragged = null;
+      wallBodies = {}; // <-- NUEVA VARIABLE
       const raycaster = new THREE.Raycaster(),
         pointer = new THREE.Vector2(),
         dragPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0),
@@ -294,7 +295,7 @@
           bevelThickness: 0.08,
           bevelSize: 0.04,
           bevelOffset: 0,
-          bevelSegments: 5, // Segmentos del biselado
+          bevelSegments: 10, // Segmentos del biselado
         }); // 2. FUSIONAR VÉRTICES DUPLICADOS
         // Centramos primero para que el cálculo y el pivote físico coincidan en el medio
 
@@ -468,22 +469,78 @@
           }
         }
       }
-      function setupBoundaryWalls() {
-        // Calculamos el ancho y alto visible del plano a la distancia z = 0 de los globos
+
+      function updateBoundaryWalls() {
+        if (!wallBodies.left) return; // Evita errores si aún no cargó físicas
+
         const distance = camera.position.z;
         const vFov = (camera.fov * Math.PI) / 180;
         const height = 2 * Math.tan(vFov / 2) * distance;
-        const width = height * camera.aspect; // Margen de seguridad para que reboten antes de tocar el borde exacto
+        const width = height * camera.aspect;
 
         const hw = width * 0.44;
         const hh = height * 0.44;
-        const thickness = 1.0; // Definimos las 4 paredes (Izquierda, Derecha, Arriba, Abajo)
+        const thickness = 10.0;
 
+        // Actualizamos la posición de los cuerpos físicos en tiempo real
+        wallBodies.left.setTranslation(
+          { x: -hw - thickness / 2, y: 0, z: 0 },
+          true,
+        );
+        wallBodies.right.setTranslation(
+          { x: hw + thickness / 2, y: 0, z: 0 },
+          true,
+        );
+        wallBodies.top.setTranslation(
+          { x: 0, y: hh + thickness / 2, z: 0 },
+          true,
+        );
+        wallBodies.bottom.setTranslation(
+          { x: 0, y: -hh - thickness / 2, z: 0 },
+          true,
+        );
+      }
+
+      function setupBoundaryWalls() {
+        const distance = camera.position.z;
+        const vFov = (camera.fov * Math.PI) / 180;
+        const height = 2 * Math.tan(vFov / 2) * distance;
+        const width = height * camera.aspect;
+
+        const hw = width * 0.44;
+        const hh = height * 0.44;
+        const thickness = 10.0; // MUCHO más grueso para evitar que lo atraviesen (tunneling)
+
+        // Definimos las 4 paredes con IDs
         const walls = [
-          { x: -hw - thickness / 2, y: 0, hx: thickness / 2, hy: hh }, // Izquierda
-          { x: hw + thickness / 2, y: 0, hx: thickness / 2, hy: hh }, // Derecha
-          { x: 0, y: hh + thickness / 2, hx: hw, hy: thickness / 2 }, // Arriba
-          { x: 0, y: -hh - thickness / 2, hx: hw, hy: thickness / 2 }, // Abajo
+          {
+            id: "left",
+            x: -hw - thickness / 2,
+            y: 0,
+            hx: thickness / 2,
+            hy: hh + thickness,
+          },
+          {
+            id: "right",
+            x: hw + thickness / 2,
+            y: 0,
+            hx: thickness / 2,
+            hy: hh + thickness,
+          },
+          {
+            id: "top",
+            x: 0,
+            y: hh + thickness / 2,
+            hx: hw + thickness,
+            hy: thickness / 2,
+          },
+          {
+            id: "bottom",
+            x: 0,
+            y: -hh - thickness / 2,
+            hx: hw + thickness,
+            hy: thickness / 2,
+          },
         ];
 
         for (const w of walls) {
@@ -493,10 +550,14 @@
             0,
           );
           const wallBody = world.createRigidBody(wallDesc);
-          const colliderDesc = RAPIER.ColliderDesc.cuboid(w.hx, w.hy, 2.0)
-            .setRestitution(0.6) // Rebote (0 = no rebota, 1 = rebote total)
-            .setFriction(0.2); // Fricción baja para que deslicen bien al tocar el borde
+
+          // El collider ahora tiene una profundidad en Z masiva (10.0) por seguridad
+          const colliderDesc = RAPIER.ColliderDesc.cuboid(w.hx, w.hy, 10.0)
+            .setRestitution(0.6)
+            .setFriction(0.2);
+
           world.createCollider(colliderDesc, wallBody);
+          wallBodies[w.id] = wallBody; // Guardamos la referencia
         }
       }
       function animate() {
@@ -518,6 +579,8 @@
         camera.updateProjectionMatrix();
         renderer.setSize(innerWidth, innerHeight);
         renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+        updateBoundaryWalls();
       }
       boot();
     </script>
