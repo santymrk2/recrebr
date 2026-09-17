@@ -137,6 +137,27 @@
       #scene.is-interactive {
         pointer-events: auto;
       }
+      #scene.menu-open {
+        pointer-events: none;
+        z-index: 60;
+      }
+      .pin-hit {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 0;
+        z-index: 4;
+        pointer-events: none;
+        touch-action: pan-y;
+        cursor: grab;
+      }
+      .pin-hit.active {
+        pointer-events: auto;
+      }
+      .pin-hit.dragging {
+        cursor: grabbing;
+      }
       canvas {
         display: block;
         width: 100%;
@@ -173,6 +194,7 @@
         z-index: 40;
         pointer-events: auto;
         max-width: 94vw;
+        will-change: transform;
         transition:
           opacity 0.35s ease,
           transform 0.35s ease;
@@ -228,15 +250,15 @@
       /* ================= Menú hamburguesa (móvil) ================= */
       .nav-toggle {
         position: fixed;
-        top: 16px;
-        right: 16px;
+        left: 50%;
+        top: auto;
+        right: auto;
+        bottom: calc(20px + env(safe-area-inset-bottom));
         z-index: 50;
         display: none;
-        flex-direction: column;
-        justify-content: center;
         align-items: center;
-        gap: 5px;
-        width: 48px;
+        justify-content: center;
+        width: 52px;
         height: 48px;
         padding: 0;
         border: 1px solid var(--line);
@@ -244,34 +266,56 @@
         background: color-mix(in srgb, var(--bg) 82%, transparent);
         backdrop-filter: blur(14px);
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        color: var(--orange);
         cursor: pointer;
+        transform: translateX(-50%);
+        will-change: transform;
         transition:
           opacity 0.35s ease,
           transform 0.35s ease;
       }
       .nav-toggle.is-hidden {
         opacity: 0;
-        transform: translateY(-10px);
+        transform: translateX(-50%) translateY(12px);
         pointer-events: none;
       }
-      .nav-toggle span {
+      .nav-toggle:active {
+        transform: translateX(-50%) scale(0.94);
+      }
+      .nav-toggle .nav-burger,
+      .nav-toggle .nav-x {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          opacity 180ms ease,
+          transform 180ms ease;
+      }
+      .nav-toggle .nav-burger {
+        flex-direction: column;
+        gap: 5px;
+      }
+      .nav-toggle .nav-burger i {
         display: block;
         width: 20px;
         height: 2px;
         border-radius: 2px;
         background: var(--orange);
-        transition:
-          transform 240ms ease,
-          opacity 240ms ease;
       }
-      .nav-toggle.is-open span:nth-child(1) {
-        transform: translateY(7px) rotate(45deg);
-      }
-      .nav-toggle.is-open span:nth-child(2) {
+      .nav-toggle .nav-x {
+        font-size: 1.45rem;
+        line-height: 1;
         opacity: 0;
+        transform: scale(0.6);
       }
-      .nav-toggle.is-open span:nth-child(3) {
-        transform: translateY(-7px) rotate(-45deg);
+      .nav-toggle.is-open .nav-burger {
+        opacity: 0;
+        transform: scale(0.6);
+      }
+      .nav-toggle.is-open .nav-x {
+        opacity: 1;
+        transform: scale(1);
       }
 
       .nav-backdrop {
@@ -293,22 +337,23 @@
 
       .nav-drawer {
         position: fixed;
-        top: 0;
-        right: 0;
-        bottom: 0;
+        inset: 0;
         z-index: 46;
-        width: min(320px, 84vw);
-        padding: 22px 26px;
-        background: var(--bg);
-        border-left: 1px solid var(--line);
-        box-shadow: -20px 0 60px rgba(0, 0, 0, 0.16);
-        transform: translateX(102%);
+        padding: 26px 28px;
+        background: #fff;
+        transform: translateY(100%);
         transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
         display: flex;
         flex-direction: column;
       }
       .nav-drawer.is-open {
-        transform: translateX(0);
+        transform: translateY(0);
+      }
+      .nav-drawer.is-open .nav-drawer-head .display {
+        visibility: hidden;
+      }
+      .nav-drawer.is-open .nav-close {
+        display: none;
       }
       .nav-drawer-head {
         display: flex;
@@ -330,29 +375,27 @@
         cursor: pointer;
       }
       .drawer-nav {
+        flex: 1 1 auto;
         display: grid;
-        gap: 0.35rem;
+        align-content: center;
+        gap: 0.6rem;
       }
       .drawer-nav a {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0.9rem 1.1rem;
+        padding: 1rem 1.1rem;
         color: var(--orange);
         text-decoration: none;
-        font-size: 1.15rem;
-        font-weight: 700;
+        font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+        font-weight: 400;
+        font-size: 1.6rem;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
         border-radius: 14px;
         transition:
           background-color 180ms ease,
           color 180ms ease;
-      }
-      .drawer-nav a::after {
-        content: "\2192";
-        opacity: 0.35;
-        transition:
-          transform 180ms ease,
-          opacity 180ms ease;
       }
       .drawer-nav a:hover {
         background: color-mix(in srgb, var(--orange) 12%, transparent);
@@ -360,16 +403,6 @@
       .drawer-nav a.active {
         background: var(--orange);
         color: #fff;
-      }
-      .drawer-nav a.active::after {
-        opacity: 1;
-        transform: translateX(3px);
-      }
-      @media (hover: hover) {
-        .drawer-nav a:hover::after {
-          opacity: 1;
-          transform: translateX(3px);
-        }
       }
       .nav-drawer-foot {
         margin-top: auto;
@@ -402,6 +435,7 @@
         place-items: center;
         box-shadow: 0 14px 34px rgba(37, 211, 102, 0.45);
         text-decoration: none;
+        will-change: transform;
       }
       .wsp-float svg {
         width: 28px;
@@ -524,16 +558,21 @@
         position: relative;
         z-index: 1;
       }
-      @media (max-width: 860px) {
-        .steps-wrap {
-          grid-template-columns: 1fr;
-        }
-      }
 
       .steps-sticky {
         position: sticky;
         top: 22vh;
         align-self: start;
+      }
+      @media (max-width: 860px) {
+        .steps-wrap {
+          grid-template-columns: 1fr;
+        }
+        .steps-sticky {
+          position: static;
+          top: auto;
+          margin-bottom: 12px;
+        }
       }
       .steps-sticky .kicker {
         color: var(--cyan);
@@ -787,11 +826,14 @@
         gap: 8px;
         background: var(--orange);
         color: #fff;
-        padding: 10px 18px;
+        padding: 12px 20px;
         border-radius: 999px;
         text-decoration: none;
-        font-weight: 700;
-        font-size: 0.9rem;
+        font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+        font-weight: 400;
+        font-size: 1rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
         transition:
           transform 180ms ease,
           background 180ms ease;
@@ -1014,6 +1056,7 @@
     </div>
 
     <div id="scene"></div>
+    <div id="pinHit" class="pin-hit" aria-hidden="true"></div>
 
     <!-- ================= NOSOTROS ================= -->
     <section id="nosotros">
@@ -1642,9 +1685,10 @@
       aria-expanded="false"
       aria-controls="mobileMenu"
     >
-      <span></span>
-      <span></span>
-      <span></span>
+      <span class="nav-burger" aria-hidden="true"
+        ><i></i><i></i><i></i
+      ></span>
+      <span class="nav-x" aria-hidden="true">✕</span>
     </button>
 
     <div class="nav-backdrop" id="navBackdrop"></div>
@@ -1782,6 +1826,7 @@
       const BALLOON_COLOR = 0x00b4d8;
 
       const sceneRoot = document.querySelector("#scene");
+      const pinHit = document.getElementById("pinHit");
       const errorBox = document.querySelector("#error");
 
       let scene, camera, renderer, world;
@@ -1804,6 +1849,10 @@
       const PIN_FLOAT_X = 0.024;
       const PIN_FLOAT_TILT = 0.017;
       const PIN_FLOAT_SPEED = 1.2;
+      const PIN_TILT_DOWN = 0.4;
+      const pinTiltEuler = new THREE.Euler();
+      const COLLIDER_RADIUS = 0.015;
+      const COLLIDER_FIT = 0.85;
       const FOOTER_SPREAD_RATIO = 0.84;
       const FOOTER_CAP_RATIO = 0.56;
       const reduceMotion = matchMedia(
@@ -1823,6 +1872,12 @@
       let pinTargetY = 2.1;
       let scrollRise = 0;
       let scrollRiseSmooth = 0;
+      let mobileMenuOpen = false;
+
+      document.addEventListener("br:menutoggle", (e) => {
+        mobileMenuOpen = Boolean(e.detail && e.detail.open);
+        sceneRoot.classList.toggle("menu-open", mobileMenuOpen);
+      });
 
       function createMaterial() {
         return new THREE.MeshPhysicalMaterial({
@@ -1982,7 +2037,12 @@
 
         const body = world.createRigidBody(bodyDesc);
 
-        const colliderDesc = RAPIER.ColliderDesc.roundCuboid(hx, hy, hz, 0.085)
+        const colliderDesc = RAPIER.ColliderDesc.roundCuboid(
+          hx * COLLIDER_FIT,
+          hy * COLLIDER_FIT,
+          hz,
+          COLLIDER_RADIUS,
+        )
           .setDensity(0.28)
           .setRestitution(0.32)
           .setFriction(0.22);
@@ -2014,11 +2074,23 @@
         pinTargetY = getViewportBounds().top - PIN_TOP_MARGIN;
       }
 
+      function updateNavToggleHidden(max) {
+        const navToggle = document.getElementById("navToggle");
+        if (!navToggle) return;
+        const footerShown = window.__footerShown === true;
+        const isOpen = navToggle.classList.contains("is-open");
+        navToggle.classList.toggle(
+          "is-hidden",
+          !isOpen && (scrollY < max || footerShown),
+        );
+      }
+
       function updateScrollProgress() {
         const max = Math.max(heroWrap.offsetHeight - innerHeight, 1);
         const t = Math.min(scrollY / (max * 0.9), 1);
         scrollRise = t * t * (3 - 2 * t);
         sceneRoot.classList.toggle("is-interactive", scrollY < max);
+        updateNavToggleHidden(max);
       }
 
       function screenToWorld(sx, sy, out) {
@@ -2075,16 +2147,33 @@
 
       function applyPinPosition() {
         const t = scrollRiseSmooth;
-        const f = hasFooterTarget ? footerProgress : 0;
+        const f = mobileMenuOpen ? 0 : hasFooterTarget ? footerProgress : 0;
         const scaleA = 1 + (PIN_SHRINK - 1) * t;
         const spreadA = 1 + (PIN_SPREAD - 1) * t;
+
+        let menuTargetX = 0;
+        let menuTargetY = 0;
+        if (mobileMenuOpen) {
+          const drawerEl = document.getElementById("mobileMenu");
+          if (drawerEl) {
+            const r = drawerEl.getBoundingClientRect();
+            const b = getViewportBounds();
+            const vw = renderer.domElement.clientWidth || innerWidth;
+            const vh = renderer.domElement.clientHeight || innerHeight;
+            menuTargetX = ((r.left + r.width / 2) / vw) * 2 - 1;
+            menuTargetX *= b.right;
+            menuTargetY = 1 - ((r.top + 66) / vh) * 2;
+            menuTargetY *= b.top;
+          }
+        }
+
         for (const item of letters) {
           const xA = item.baseHomeX * spreadA;
           const yA = item.baseHomeY + (pinTargetY - item.baseHomeY) * t;
           const xB = footerOriginX + item.baseHomeX * footerSpread;
 
-          const x = xA + (xB - xA) * f;
-          const y = yA + (footerTarget.y - yA) * f;
+          const x = mobileMenuOpen ? xA + menuTargetX : xA + (xB - xA) * f;
+          const y = mobileMenuOpen ? menuTargetY : yA + (footerTarget.y - yA) * f;
           const scale = scaleA + (footerScale - scaleA) * f;
 
           if (f > 0) {
@@ -2103,10 +2192,10 @@
             const { hx, hy, hz } = item.colliderHalf;
             item.collider.setShape(
               new RAPIER.RoundCuboid(
-                hx * scale,
-                hy * scale,
+                hx * COLLIDER_FIT * scale,
+                hy * COLLIDER_FIT * scale,
                 hz * scale,
-                0.085 * scale,
+                COLLIDER_RADIUS * scale,
               ),
             );
           }
@@ -2195,11 +2284,13 @@
 
       function setupPointerEvents() {
         const canvas = renderer.domElement;
-        canvas.addEventListener("pointerdown", onPointerDown);
-        canvas.addEventListener("pointermove", onPointerMove);
-        canvas.addEventListener("pointerup", onPointerUp);
-        canvas.addEventListener("pointercancel", onPointerUp);
-        canvas.addEventListener("dblclick", onDoubleClick);
+        for (const el of [canvas, pinHit]) {
+          el.addEventListener("pointerdown", onPointerDown);
+          el.addEventListener("pointermove", onPointerMove);
+          el.addEventListener("pointerup", onPointerUp);
+          el.addEventListener("pointercancel", onPointerUp);
+          el.addEventListener("dblclick", onDoubleClick);
+        }
       }
 
       function updatePointer(event) {
@@ -2231,8 +2322,8 @@
         item.previousDragPoint.copy(dragPoint);
         item.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
         item.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
-        renderer.domElement.classList.add("dragging");
-        renderer.domElement.setPointerCapture?.(event.pointerId);
+        event.currentTarget.classList.add("dragging");
+        event.currentTarget.setPointerCapture?.(event.pointerId);
       }
 
       function onPointerMove(event) {
@@ -2257,8 +2348,8 @@
         item.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
         item.returning = true;
         dragged = null;
-        renderer.domElement.releasePointerCapture?.(event.pointerId);
-        renderer.domElement.classList.remove("dragging");
+        event.currentTarget.releasePointerCapture?.(event.pointerId);
+        event.currentTarget.classList.remove("dragging");
       }
 
       function onDoubleClick(event) {
@@ -2359,7 +2450,7 @@
       /* En el footer las letras las manda el scroll, sin resorte de por medio:
          si no, llegan tarde y el texto ya se borró cuando todavía están lejos. */
       function driveFooterLetters() {
-        if (footerProgress <= 0.001) return;
+        if (footerProgress <= 0.001 || mobileMenuOpen) return;
         for (const item of letters) {
           if (item.isDragging) continue;
           item.body.setTranslation(
@@ -2398,6 +2489,37 @@
         }
       }
 
+      function updatePinHit() {
+        const pinned =
+          scrollRiseSmooth > 0.999 &&
+          footerProgress < 0.02 &&
+          !mobileMenuOpen;
+        if (!letters.length || !pinned) {
+          pinHit.classList.remove("active");
+          return;
+        }
+        const probe = new THREE.Vector3();
+        const viewportHalfH =
+          Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) *
+          camera.position.z;
+        const h = renderer.domElement.clientHeight || innerHeight;
+        const pad = 12 / h;
+        let top = 1,
+          bottom = -1;
+        for (const item of letters) {
+          probe.copy(item.mesh.position).project(camera);
+          const halfH =
+            (item.colliderHalf.hy * item.colliderScale) / viewportHalfH;
+          top = Math.min(top, probe.y - halfH - pad);
+          bottom = Math.max(bottom, probe.y + halfH + pad);
+        }
+        const pxTop = Math.max(((1 - bottom) / 2) * h, 0);
+        const pxHeight = Math.max(((1 - top) / 2) * h - pxTop, 0);
+        pinHit.style.top = pxTop + "px";
+        pinHit.style.height = pxHeight + "px";
+        pinHit.classList.add("active");
+      }
+
       function applyFloat(elapsed) {
         const amp = reduceMotion
           ? 0
@@ -2409,6 +2531,19 @@
           item.mesh.position.y += Math.sin(w) * PIN_FLOAT_Y * amp;
           item.mesh.position.x += Math.cos(w * 0.73) * PIN_FLOAT_X * amp;
           item.mesh.rotateZ(Math.sin(w * 0.61) * PIN_FLOAT_TILT * amp);
+        }
+      }
+
+      function applyPinnedTilt() {
+        const amp = reduceMotion
+          ? 0
+          : scrollRiseSmooth * (1 - footerProgress);
+        if (amp < 0.001) return;
+        const tilt = PIN_TILT_DOWN * amp;
+        for (const item of letters) {
+          pinTiltEuler.setFromQuaternion(item.mesh.quaternion, "XYZ");
+          pinTiltEuler.x += tilt;
+          item.mesh.quaternion.setFromEuler(pinTiltEuler);
         }
       }
 
@@ -2431,6 +2566,8 @@
         driveFooterLetters();
         syncPhysics();
         applyFloat(timer.getElapsed());
+        applyPinnedTilt();
+        updatePinHit();
         renderer.render(scene, camera);
       }
 
@@ -2726,8 +2863,18 @@
         const observer = new IntersectionObserver(
           (entries) => {
             entries.forEach((entry) => {
-              hud.classList.toggle("is-hidden", entry.isIntersecting);
-              navToggle?.classList.toggle("is-hidden", entry.isIntersecting);
+              const footerIn = entry.isIntersecting;
+              window.__footerShown = footerIn;
+              hud.classList.toggle("is-hidden", footerIn);
+              if (!navToggle) return;
+              const heroH =
+                document.querySelector(".hero-wrap")?.offsetHeight ?? 0;
+              const max = Math.max(heroH - innerHeight, 1);
+              const isOpen = navToggle.classList.contains("is-open");
+              navToggle.classList.toggle(
+                "is-hidden",
+                !isOpen && (scrollY < max || footerIn),
+              );
             });
           },
           { threshold: 0 },
@@ -2749,6 +2896,9 @@
           toggle.setAttribute("aria-expanded", "false");
           toggle.setAttribute("aria-label", "Abrir menú");
           document.body.style.overflow = "";
+          document.dispatchEvent(
+            new CustomEvent("br:menutoggle", { detail: { open: false } }),
+          );
         };
 
         const open = () => {
@@ -2758,6 +2908,9 @@
           toggle.setAttribute("aria-expanded", "true");
           toggle.setAttribute("aria-label", "Cerrar menú");
           document.body.style.overflow = "hidden";
+          document.dispatchEvent(
+            new CustomEvent("br:menutoggle", { detail: { open: true } }),
+          );
         };
 
         toggle.addEventListener("click", () => {
