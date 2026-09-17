@@ -6,7 +6,7 @@
     <title>B&amp;R — Recreación e Inflables</title>
     <meta
       name="description"
-      content="B&R: alquiler de juegos inflables, animación y decoración con globos para cumpleaños y eventos."
+      content="B&R: alquiler de juegos inflables y animación para eventos en Buenos Aires."
     />
 
     <style>
@@ -473,7 +473,7 @@
       }
       .services-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 20px;
         margin-top: 3rem;
         position: relative;
@@ -1039,49 +1039,6 @@
               Animadores con juegos, música y dinámicas para todas las edades.
             </p>
           </div>
-          <div class="service reveal" style="--tilt: -0.8deg">
-            <div class="icon3d" data-icon="droplet">
-              <svg
-                class="icon"
-                viewBox="0 0 48 48"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.6"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="14" cy="18" r="8" />
-                <circle cx="30" cy="14" r="6" />
-                <circle cx="34" cy="28" r="7" />
-                <path d="M14 26 V40 M30 20 V34 M34 35 V42" />
-              </svg>
-            </div>
-            <h3>Decoración con globos</h3>
-            <p>
-              Arcos, columnas y centros de mesa a medida del tema del festejo.
-            </p>
-          </div>
-          <div class="service reveal" style="--tilt: 1.6deg">
-            <div class="icon3d" data-icon="star">
-              <svg
-                class="icon"
-                viewBox="0 0 48 48"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.6"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M24 6 L28 18 L40 18 L30 26 L34 38 L24 30 L14 38 L18 26 L8 18 L20 18 Z"
-                />
-              </svg>
-            </div>
-            <h3>Shows y espectáculos</h3>
-            <p>
-              Magia, espuma, burbujas o el show sorpresa que estés imaginando.
-            </p>
-          </div>
           <div class="service reveal" style="--tilt: -1.2deg">
             <div class="icon3d" data-icon="ice-cream">
               <svg
@@ -1100,8 +1057,7 @@
             </div>
             <h3>Combos de cumpleaños</h3>
             <p>
-              Inflable, animación y decoración en un solo paquete, con precio
-              cerrado.
+              Inflable y animación en un solo paquete, con precio cerrado.
             </p>
           </div>
           <div class="service reveal" style="--tilt: 0.9deg">
@@ -1416,10 +1372,9 @@
       <div class="wrap">
         <div class="footer-grid">
           <div class="foot-brand">
-            <div class="display">B&amp;R</div>
+            <div class="display"><span id="footBrandText">B&amp;R</span></div>
             <p>
-              Alquiler de inflables, animación y decoración con globos para
-              cumpleaños y eventos en Buenos Aires.
+              Alquiler de inflables, animación y eventos en Buenos Aires.
             </p>
             <div class="social-row">
               <a
@@ -1491,7 +1446,6 @@
                   >WhatsApp +54 9 11 6538-3672</a
                 >
               </li>
-              <li><a href="mailto:hola@byr.com.ar">hola@byr.com.ar</a></li>
               <li><a href="#">Buenos Aires, Argentina</a></li>
             </ul>
           </div>
@@ -1501,7 +1455,7 @@
             >© <span id="year"></span> B&amp;R. Todos los derechos
             reservados.</span
           >
-          <span>Hecho con globos y buena onda.</span>
+          <span>Hecho con buena onda.</span>
         </div>
       </div>
     </footer>
@@ -1651,9 +1605,22 @@
       const PIN_FLOAT_X = 0.024;
       const PIN_FLOAT_TILT = 0.017;
       const PIN_FLOAT_SPEED = 1.2;
+      const FOOTER_SPREAD_RATIO = 0.84;
+      const FOOTER_CAP_RATIO = 0.56;
       const reduceMotion = matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
+
+      const footBrand = document.getElementById("footBrandText");
+      const footerPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+      const footerTarget = new THREE.Vector3();
+      const footerProbe = new THREE.Vector3();
+      const IDENTITY_QUAT = new THREE.Quaternion();
+      let footerProgress = 0;
+      let footerScale = 1;
+      let footerSpread = 0;
+      let footerOriginX = 0;
+      let hasFooterTarget = false;
       let pinTargetY = 2.1;
       let scrollRise = 0;
       let scrollRiseSmooth = 0;
@@ -1830,6 +1797,7 @@
           colliderScale: 1,
           floatPhase: letters.length * 2.1,
           floatSpeed: 1 + letters.length * 0.14,
+          baseHomeQuaternion: initialQuaternion.clone(),
           isDragging: false,
           returning: false,
           baseHomeX: spec.x,
@@ -1854,14 +1822,82 @@
         sceneRoot.classList.toggle("is-interactive", scrollY < max);
       }
 
+      function screenToWorld(sx, sy, out) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        pointer.x = ((sx - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -(((sy - rect.top) / rect.height) * 2 - 1);
+        raycaster.setFromCamera(pointer, camera);
+        return raycaster.ray.intersectPlane(footerPlane, out);
+      }
+
+      /* El viaje se ancla al FOOTER COMPLETO (no al texto): arranca cuando el
+         footer asoma por abajo y completa cuando ya llena la pantalla. Si se
+         anclara al span, el descenso entero quedaba comprimido en los últimos
+         ~280px de scroll y las letras quedaban "volando a media altura". */
+      const footerEl = document.querySelector("footer");
+      function updateFooterTarget() {
+        hasFooterTarget = false;
+        if (!footBrand || !letters.length || !footerEl) {
+          footerProgress = 0;
+          return;
+        }
+        const rect = footBrand.getBoundingClientRect();
+        const footTop = footerEl.getBoundingClientRect().top;
+        if (
+          scrollY >=
+          document.documentElement.scrollHeight - innerHeight - 4
+        ) {
+          footerProgress = 1;
+        } else {
+          footerProgress = THREE.MathUtils.clamp(
+            (innerHeight - footTop) / (innerHeight * 0.75),
+            0,
+            1,
+          );
+        }
+        if (footerProgress <= 0.001) return;
+
+        screenToWorld(rect.left, rect.top + rect.height / 2, footerTarget);
+        screenToWorld(rect.left, rect.top, footerProbe);
+        const yTop = footerProbe.y;
+        screenToWorld(rect.left, rect.bottom, footerProbe);
+        const rectWorldH = Math.abs(yTop - footerProbe.y);
+
+        const ref = letters[0];
+        footerScale =
+          (rectWorldH * FOOTER_CAP_RATIO) / (2 * ref.colliderHalf.hy);
+        footerSpread = footerScale * FOOTER_SPREAD_RATIO;
+        footerOriginX =
+          footerTarget.x +
+          Math.abs(ref.baseHomeX) * footerSpread +
+          ref.colliderHalf.hx * footerScale;
+        hasFooterTarget = true;
+      }
+
       function applyPinPosition() {
         const t = scrollRiseSmooth;
-        const scale = 1 + (PIN_SHRINK - 1) * t;
-        const spread = 1 + (PIN_SPREAD - 1) * t;
+        const f = hasFooterTarget ? footerProgress : 0;
+        const scaleA = 1 + (PIN_SHRINK - 1) * t;
+        const spreadA = 1 + (PIN_SPREAD - 1) * t;
         for (const item of letters) {
-          item.homePosition.x = item.baseHomeX * spread;
-          item.homePosition.y =
-            item.baseHomeY + (pinTargetY - item.baseHomeY) * t;
+          const xA = item.baseHomeX * spreadA;
+          const yA = item.baseHomeY + (pinTargetY - item.baseHomeY) * t;
+          const xB = footerOriginX + item.baseHomeX * footerSpread;
+
+          const x = xA + (xB - xA) * f;
+          const y = yA + (footerTarget.y - yA) * f;
+          const scale = scaleA + (footerScale - scaleA) * f;
+
+          if (f > 0) {
+            item.homeQuaternion
+              .copy(item.baseHomeQuaternion)
+              .slerp(IDENTITY_QUAT, f);
+          } else {
+            item.homeQuaternion.copy(item.baseHomeQuaternion);
+          }
+
+          item.homePosition.x = x;
+          item.homePosition.y = y;
           item.mesh.scale.setScalar(scale);
           if (Math.abs(scale - item.colliderScale) > 0.02) {
             item.colliderScale = scale;
@@ -2121,6 +2157,34 @@
         }
       }
 
+      /* En el footer las letras las manda el scroll, sin resorte de por medio:
+         si no, llegan tarde y el texto ya se borró cuando todavía están lejos. */
+      function driveFooterLetters() {
+        if (footerProgress <= 0.001) return;
+        for (const item of letters) {
+          if (item.isDragging) continue;
+          item.body.setTranslation(
+            {
+              x: item.homePosition.x,
+              y: item.homePosition.y,
+              z: item.homePosition.z,
+            },
+            true,
+          );
+          item.body.setRotation(
+            {
+              x: item.homeQuaternion.x,
+              y: item.homeQuaternion.y,
+              z: item.homeQuaternion.z,
+              w: item.homeQuaternion.w,
+            },
+            true,
+          );
+          item.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+          item.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+        }
+      }
+
       function syncPhysics() {
         for (const item of letters) {
           const translation = item.body.translation();
@@ -2136,7 +2200,9 @@
       }
 
       function applyFloat(elapsed) {
-        const amp = reduceMotion ? 0 : scrollRiseSmooth;
+        const amp = reduceMotion
+          ? 0
+          : scrollRiseSmooth * (1 - footerProgress);
         if (amp < 0.001) return;
         for (const item of letters) {
           const w =
@@ -2153,10 +2219,17 @@
         const delta = Math.min(timer.getDelta(), 0.033);
         scrollRiseSmooth +=
           (scrollRise - scrollRiseSmooth) * Math.min(1, delta * 7);
+        updateFooterTarget();
+        if (footBrand) {
+          footBrand.style.opacity = String(
+            Math.max(0, 1 - footerProgress / 0.8),
+          );
+        }
         applyPinPosition();
         updateReturningLetters(delta);
         world.timestep = delta;
         world.step();
+        driveFooterLetters();
         syncPhysics();
         applyFloat(timer.getElapsed());
         renderer.render(scene, camera);
