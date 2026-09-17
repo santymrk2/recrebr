@@ -225,6 +225,168 @@
         transform: translateY(-1px);
       }
 
+      /* ================= Menú hamburguesa (móvil) ================= */
+      .nav-toggle {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 50;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--bg) 82%, transparent);
+        backdrop-filter: blur(14px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition:
+          opacity 0.35s ease,
+          transform 0.35s ease;
+      }
+      .nav-toggle.is-hidden {
+        opacity: 0;
+        transform: translateY(-10px);
+        pointer-events: none;
+      }
+      .nav-toggle span {
+        display: block;
+        width: 20px;
+        height: 2px;
+        border-radius: 2px;
+        background: var(--orange);
+        transition:
+          transform 240ms ease,
+          opacity 240ms ease;
+      }
+      .nav-toggle.is-open span:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+      }
+      .nav-toggle.is-open span:nth-child(2) {
+        opacity: 0;
+      }
+      .nav-toggle.is-open span:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+      }
+
+      .nav-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 45;
+        background: rgba(24, 12, 0, 0.4);
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity 260ms ease,
+          visibility 260ms ease;
+      }
+      .nav-backdrop.is-open {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      .nav-drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 46;
+        width: min(320px, 84vw);
+        padding: 22px 26px;
+        background: var(--bg);
+        border-left: 1px solid var(--line);
+        box-shadow: -20px 0 60px rgba(0, 0, 0, 0.16);
+        transform: translateX(102%);
+        transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+        display: flex;
+        flex-direction: column;
+      }
+      .nav-drawer.is-open {
+        transform: translateX(0);
+      }
+      .nav-drawer-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        font-size: 1.6rem;
+        color: var(--orange);
+      }
+      .nav-close {
+        width: 40px;
+        height: 40px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: transparent;
+        color: var(--orange);
+        font-size: 1.05rem;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .drawer-nav {
+        display: grid;
+        gap: 0.35rem;
+      }
+      .drawer-nav a {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.9rem 1.1rem;
+        color: var(--orange);
+        text-decoration: none;
+        font-size: 1.15rem;
+        font-weight: 700;
+        border-radius: 14px;
+        transition:
+          background-color 180ms ease,
+          color 180ms ease;
+      }
+      .drawer-nav a::after {
+        content: "\2192";
+        opacity: 0.35;
+        transition:
+          transform 180ms ease,
+          opacity 180ms ease;
+      }
+      .drawer-nav a:hover {
+        background: color-mix(in srgb, var(--orange) 12%, transparent);
+      }
+      .drawer-nav a.active {
+        background: var(--orange);
+        color: #fff;
+      }
+      .drawer-nav a.active::after {
+        opacity: 1;
+        transform: translateX(3px);
+      }
+      @media (hover: hover) {
+        .drawer-nav a:hover::after {
+          opacity: 1;
+          transform: translateX(3px);
+        }
+      }
+      .nav-drawer-foot {
+        margin-top: auto;
+        padding-top: 2rem;
+        font-size: 0.8rem;
+        color: var(--text-soft);
+      }
+
+      @media (max-width: 720px) {
+        .nav-toggle {
+          display: flex;
+        }
+        .hud {
+          display: none;
+        }
+      }
+
       /* ================= WhatsApp flotante ================= */
       .wsp-float {
         position: fixed;
@@ -1471,6 +1633,43 @@
       </nav>
     </div>
 
+    <!-- ================= MENÚ HAMBURGUESA (MÓVIL) ================= -->
+    <button
+      class="nav-toggle"
+      id="navToggle"
+      type="button"
+      aria-label="Abrir menú"
+      aria-expanded="false"
+      aria-controls="mobileMenu"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <div class="nav-backdrop" id="navBackdrop"></div>
+
+    <aside class="nav-drawer" id="mobileMenu" aria-label="Navegación móvil">
+      <div class="nav-drawer-head">
+        <span class="display">B&amp;R</span>
+        <button
+          class="nav-close"
+          id="navClose"
+          type="button"
+          aria-label="Cerrar menú"
+        >
+          ✕
+        </button>
+      </div>
+      <nav class="drawer-nav">
+        <a href="#hero-wrap" data-nav="hero-wrap">Inicio</a>
+        <a href="#nosotros" data-nav="nosotros">Nosotros</a>
+        <a href="#proceso" data-nav="proceso">Proceso</a>
+        <a href="#servicios" data-nav="servicios">Servicios</a>
+        <a href="#juegos" data-nav="juegos">Juegos</a>
+      </nav>
+    </aside>
+
     <a
       class="wsp-float"
       href="https://wa.me/5491165383672?text=Hola!%20Quiero%20consultar%20disponibilidad"
@@ -2521,17 +2720,63 @@
       /* -------- Ocultar el navbar al llegar al footer -------- */
       (function hideNavOnFooter() {
         const hud = document.querySelector(".hud");
+        const navToggle = document.getElementById("navToggle");
         const footer = document.getElementById("contacto");
         if (!hud || !footer) return;
         const observer = new IntersectionObserver(
           (entries) => {
-            entries.forEach((entry) =>
-              hud.classList.toggle("is-hidden", entry.isIntersecting),
-            );
+            entries.forEach((entry) => {
+              hud.classList.toggle("is-hidden", entry.isIntersecting);
+              navToggle?.classList.toggle("is-hidden", entry.isIntersecting);
+            });
           },
           { threshold: 0 },
         );
         observer.observe(footer);
+      })();
+
+      /* -------- Menú hamburguesa (móvil) -------- */
+      (function setupMobileMenu() {
+        const toggle = document.getElementById("navToggle");
+        const drawer = document.getElementById("mobileMenu");
+        const backdrop = document.getElementById("navBackdrop");
+        if (!toggle || !drawer || !backdrop) return;
+
+        const close = () => {
+          toggle.classList.remove("is-open");
+          drawer.classList.remove("is-open");
+          backdrop.classList.remove("is-open");
+          toggle.setAttribute("aria-expanded", "false");
+          toggle.setAttribute("aria-label", "Abrir menú");
+          document.body.style.overflow = "";
+        };
+
+        const open = () => {
+          toggle.classList.add("is-open");
+          drawer.classList.add("is-open");
+          backdrop.classList.add("is-open");
+          toggle.setAttribute("aria-expanded", "true");
+          toggle.setAttribute("aria-label", "Cerrar menú");
+          document.body.style.overflow = "hidden";
+        };
+
+        toggle.addEventListener("click", () => {
+          drawer.classList.contains("is-open") ? close() : open();
+        });
+        backdrop.addEventListener("click", close);
+        document.getElementById("navClose")?.addEventListener("click", close);
+
+        drawer.querySelectorAll("a").forEach((a) =>
+          a.addEventListener("click", close),
+        );
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") close();
+        });
+
+        window.addEventListener("resize", () => {
+          if (matchMedia("(min-width: 721px)").matches) close();
+        });
       })();
 
       /* -------- Texto que se resalta "en partes" al hacer scroll -------- */
@@ -2610,7 +2855,9 @@
         });
 
         // Estado activo del nav flotante
-        const navLinks = document.querySelectorAll(".bottom-nav a");
+        const navLinks = document.querySelectorAll(
+          ".bottom-nav a, .drawer-nav a",
+        );
         ["hero-wrap", "nosotros", "proceso", "servicios", "juegos"].forEach(
           (id) => {
             const target = document.getElementById(id);
