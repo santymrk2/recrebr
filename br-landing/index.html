@@ -141,6 +141,11 @@
         pointer-events: none;
         z-index: 60;
       }
+      @media (hover: none) {
+        #scene.is-interactive {
+          pointer-events: none;
+        }
+      }
       .pin-hit {
         position: fixed;
         top: 0;
@@ -149,7 +154,7 @@
         height: 0;
         z-index: 4;
         pointer-events: none;
-        touch-action: pan-y;
+        touch-action: none;
         cursor: grab;
       }
       .pin-hit.active {
@@ -239,12 +244,10 @@
       }
       .bottom-nav a:hover {
         background: color-mix(in srgb, var(--orange) 16%, transparent);
-        transform: translateY(-1px);
       }
       .bottom-nav a.active {
         background: var(--orange);
         color: #fff;
-        transform: translateY(-1px);
       }
 
       /* ================= Menú hamburguesa (móvil) ================= */
@@ -1849,12 +1852,14 @@
       const PIN_FLOAT_X = 0.024;
       const PIN_FLOAT_TILT = 0.017;
       const PIN_FLOAT_SPEED = 1.2;
+      const HERO_FLOAT = 0.6;
       const PIN_TILT_DOWN = 0.4;
       const pinTiltEuler = new THREE.Euler();
       const COLLIDER_RADIUS = 0.015;
       const COLLIDER_FIT = 0.85;
       const FOOTER_SPREAD_RATIO = 0.84;
       const FOOTER_CAP_RATIO = 0.56;
+      const BALLOON_END = 0.12;
       const reduceMotion = matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
@@ -1868,7 +1873,6 @@
       let footerScale = 1;
       let footerSpread = 0;
       let footerOriginX = 0;
-      let hasFooterTarget = false;
       let pinTargetY = 2.1;
       let scrollRise = 0;
       let scrollRiseSmooth = 0;
@@ -1923,7 +1927,7 @@
             powerPreference: "high-performance",
           });
           renderer.shadowMap.enabled = true;
-          renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+          renderer.shadowMap.type = THREE.PCFShadowMap;
           renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
           renderer.setSize(innerWidth, innerHeight);
           renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -2107,7 +2111,6 @@
          ~280px de scroll y las letras quedaban "volando a media altura". */
       const footerEl = document.querySelector("footer");
       function updateFooterTarget() {
-        hasFooterTarget = false;
         if (!footBrand || !letters.length || !footerEl) {
           footerProgress = 0;
           return;
@@ -2142,12 +2145,10 @@
           footerTarget.x +
           Math.abs(ref.baseHomeX) * footerSpread +
           ref.colliderHalf.hx * footerScale;
-        hasFooterTarget = true;
       }
 
       function applyPinPosition() {
         const t = scrollRiseSmooth;
-        const f = mobileMenuOpen ? 0 : hasFooterTarget ? footerProgress : 0;
         const scaleA = 1 + (PIN_SHRINK - 1) * t;
         const spreadA = 1 + (PIN_SPREAD - 1) * t;
 
@@ -2170,11 +2171,34 @@
         for (const item of letters) {
           const xA = item.baseHomeX * spreadA;
           const yA = item.baseHomeY + (pinTargetY - item.baseHomeY) * t;
-          const xB = footerOriginX + item.baseHomeX * footerSpread;
 
-          const x = mobileMenuOpen ? xA + menuTargetX : xA + (xB - xA) * f;
-          const y = mobileMenuOpen ? menuTargetY : yA + (footerTarget.y - yA) * f;
-          const scale = scaleA + (footerScale - scaleA) * f;
+          let x, y, scale, f;
+          if (mobileMenuOpen) {
+            x = xA + menuTargetX;
+            y = menuTargetY;
+            scale = scaleA;
+            f = 0;
+          } else if (footerProgress >= BALLOON_END) {
+            x = footerOriginX + item.baseHomeX * footerSpread;
+            y = footerTarget.y;
+            scale = footerScale;
+            f = 1;
+          } else if (footerProgress > 0.001) {
+            const b = Math.min(footerProgress / BALLOON_END, 1);
+            const ease = b * b;
+            const bounds = getViewportBounds();
+            const flyY =
+              bounds.top + item.colliderHalf.hy * scaleA + 1.2;
+            y = yA + (flyY - yA) * ease;
+            x = xA * (1 + 0.22 * ease);
+            scale = scaleA * (1 + 0.1 * ease);
+            f = 0;
+          } else {
+            x = xA;
+            y = yA;
+            scale = scaleA;
+            f = 0;
+          }
 
           if (f > 0) {
             item.homeQuaternion
@@ -2523,7 +2547,8 @@
       function applyFloat(elapsed) {
         const amp = reduceMotion
           ? 0
-          : scrollRiseSmooth * (1 - footerProgress);
+          : (HERO_FLOAT + (1 - HERO_FLOAT) * scrollRiseSmooth) *
+            (1 - footerProgress);
         if (amp < 0.001) return;
         for (const item of letters) {
           const w =
@@ -2675,11 +2700,12 @@
           renderer.setSize(innerWidth, innerHeight);
         }
 
-        const clock = new THREE.Clock();
+        const timer = new THREE.Timer();
 
         function tick() {
           requestAnimationFrame(tick);
-          const t = clock.getElapsedTime();
+          timer.update();
+          const t = timer.getElapsed();
 
           renderer.setScissorTest(false);
           renderer.setViewport(0, 0, innerWidth, innerHeight);
@@ -2821,7 +2847,12 @@
       }
 
       async function buildIconGeometry(name) {
-        const svg = await svgLoader.loadAsync(`${ICON_CDN}/${name}.svg`);
+        const svgText = await fetch(`${ICON_CDN}/${name}.svg`).then((res) =>
+          res.text(),
+        );
+        const svg = svgLoader.parse(
+          svgText.replace(/currentColor/gi, "#000000"),
+        );
         const shapes = [];
         for (const path of svg.paths) shapes.push(...path.toShapes());
 
