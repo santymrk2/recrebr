@@ -1,0 +1,260 @@
+{
+  "negocio": "B&R Recreación e Inflables",
+  "moneda": "ARS",
+  "nota_general": "Transcripto directamente de capturas del catálogo de WhatsApp Business. Muchas descripciones vienen cortadas en la captura original (marcadas con '...' y \"descripcion_truncada\": true) y hay precios con formato inconsistente que conviene revisar antes de cargarlos a una base de datos real.",
+  "items": [
+    {
+      "id": 1,
+      "nombre": "Combo Exclusivo Verano",
+      "descripcion": null,
+      "descripcion_truncada": true,
+      "precio_actual": 650000,
+      "precio_original": 1140000,
+      "notas": "Nombre y precios ambiguos: la captura muestra el título cortado (empieza en 'e...') y los precios están dibujados dentro de la imagen del producto, no en el campo de precio de la lista. Revisar en el catálogo real."
+    },
+    {
+      "id": 2,
+      "nombre": "Ticket Band",
+      "descripcion": "a convenir con el evento",
+      "descripcion_truncada": false,
+      "precio_actual": null,
+      "precio_original": null,
+      "notas": "Sin precio fijo, a convenir."
+    },
+    {
+      "id": 3,
+      "nombre": "Carrera de Torpedos",
+      "descripcion": "la carrera de torpedo es para...",
+      "descripcion_truncada": true,
+      "precio_actual": 90000,
+      "precio_original": null
+    },
+    {
+      "id": 4,
+      "nombre": "Burbu Fútbol ⚽",
+      "descripcion": "No solo jugamos fútbol sino o...",
+      "descripcion_truncada": true,
+      "precio_actual": 350000,
+      "precio_original": null
+    },
+    {
+      "id": 5,
+      "nombre": "Disfraces Inflables",
+      "descripcion": "🎭 Disfraces Inflables para Al...",
+      "descripcion_truncada": true,
+      "precio_actual": 50000,
+      "precio_original": null,
+      "notas": "Aparece dos veces en las capturas (final de la imagen 1 y comienzo de la imagen 2) por solapamiento de scroll; se dejó una sola entrada."
+    },
+    {
+      "id": 6,
+      "nombre": "Toro Mecánico",
+      "descripcion": "precio de base + traslado",
+      "descripcion_truncada": false,
+      "precio_actual": 300000,
+      "precio_original": null
+    },
+    {
+      "id": 7,
+      "nombre": "Carrera de Obstaculos",
+      "descripcion": "la carrera de obstaculo es co...",
+      "descripcion_truncada": true,
+      "precio_actual": 200,
+      "precio_original": null,
+      "notas": "El precio en la captura dice literalmente '$200,00', que probablemente sea un error de carga y debería ser $200.000,00 (2-3 dígitos menos que items similares). Revisar."
+    },
+    {
+      "id": 8,
+      "nombre": "Paintball con Hydrogel",
+      "descripcion": "¡Lanza la Batalla de Gel Más...",
+      "descripcion_truncada": true,
+      "precio_actual": 250000,
+      "precio_original": null
+    },
+    {
+      "id": 9,
+      "nombre": "Ambientacion Futbolera",
+      "descripcion": "los precios son combinables.",
+      "descripcion_truncada": false,
+      "precio_actual": 245000,
+      "precio_original": null,
+      "notas": "El título en la captura dice 'AMBIENTACION FUTBOLERA desde', sugiere que $245.000 es un precio 'desde'."
+    },
+    {
+      "id": 10,
+      "nombre": "Golf Chill 🚩",
+      "descripcion": "Golf para toda la familia, con t...",
+      "descripcion_truncada": true,
+      "precio_actual": 55000,
+      "precio_original": 200000
+    },
+    {
+      "id": 11,
+      "nombre": "Lucha de Sumo",
+      "descripcion": "Competencia divertida con trajes inflables de sumo",
+      "descripcion_truncada": false,
+      "precio_actual": 75000,
+      "precio_original": null,
+      "notas": "Descripción tomada del texto dentro de la imagen del producto, no del campo de descripción de la lista (que aparecía vacío)."
+    },
+    {
+      "id": 12,
+      "nombre": "Batalla Gel Blaster",
+      "descripcion": "BATALLA GEL BLASTER/ PAIN...",
+      "descripcion_truncada": true,
+      "precio_actual": 350000,
+      "precio_original": null
+    },
+    {
+      "id": 13,
+      "nombre": "Plaza Blanda",
+      "descripcion": "pelotero de lego con",
+      "descripcion_truncada": true,
+      "precio_actual": 75000,
+      "precio_original": null
+    },
+    {
+      "id": 14,
+      "nombre": "Sinaí Combo 4 - Legos XL",
+      "descripcion": "Fomentar los juegos ludicos,...",
+      "descripcion_truncada": true,
+      "precio_actual": 100000,
+      "precio_original": null
+    },
+    {
+      "id": 15,
+      "nombre": "Sinaí Combo 3 - Plaza blanda acuática",
+      "descripcion": "La idea es para que los niños...",
+      "descripcion_truncada": true,
+      "precio_actual": 250000,
+      "precio_original": null
+    },
+    {
+      "id": 16,
+      "nombre": "Sinaí Combo 2 - Juegos XL Clásicos",
+      "descripcion": "Juegos estáticos libres de sal...",
+      "descripcion_truncada": true,
+      "precio_actual": 250000,
+      "precio_original": null
+    },
+    {
+      "id": 17,
+      "nombre": "Sinaí Combo 1 - Juegos todo terreno",
+      "descripcion": "Este es el combo de Juegos p...",
+      "descripcion_truncada": true,
+      "precio_actual": 95000,
+      "precio_original": null
+    },
+    {
+      "id": 18,
+      "nombre": "Bingo Músical",
+      "descripcion": "Según personalización, ubica...",
+      "descripcion_truncada": true,
+      "precio_actual": null,
+      "precio_original": null
+    },
+    {
+      "id": 19,
+      "nombre": "Recre en Sinaí",
+      "descripcion": "Precios a presupuestar. Al 50%",
+      "descripcion_truncada": false,
+      "precio_actual": null,
+      "precio_original": null,
+      "notas": "'Al 50%' probablemente se refiere a una condición de seña/anticipo, no a un descuento."
+    },
+    {
+      "id": 20,
+      "nombre": "Eventos Acuáticos",
+      "descripcion": null,
+      "descripcion_truncada": false,
+      "precio_actual": 250000,
+      "precio_original": null,
+      "moneda_item": "USD",
+      "notas": "Único ítem con precio en 'US$' en vez de '$'. Revisar si es intencional o error de carga."
+    },
+    {
+      "id": 21,
+      "nombre": "Fiesta de Espuma (1 hora)",
+      "descripcion": "Fiesta de Espuma (B&R Recre...",
+      "descripcion_truncada": true,
+      "precio_actual": 400000,
+      "precio_original": null,
+      "notas": "Aparece como 'FIESTA DE ESPUMA / Los 40 minutos...' cortado al final de la imagen 3 y completo como 'Fiesta de espuma x 1 hora' en la imagen 4; se tomó la versión completa."
+    },
+    {
+      "id": 22,
+      "nombre": "Floki",
+      "descripcion": null,
+      "descripcion_truncada": false,
+      "precio_actual": null,
+      "precio_original": null,
+      "notas": "Sin descripción ni precio cargados en la captura."
+    },
+    {
+      "id": 23,
+      "nombre": "Arcade Consola Gadnic",
+      "descripcion": "También las vendemos en $3...",
+      "descripcion_truncada": true,
+      "precio_actual": 45000,
+      "precio_original": 50000,
+      "notas": "Descripción sugiere que también se vende (no solo se alquila)."
+    },
+    {
+      "id": 24,
+      "nombre": "Juegos Clásicos XXL",
+      "descripcion": "🎉 ¡Llevá la diversión a lo gra...",
+      "descripcion_truncada": true,
+      "precio_actual": 350000,
+      "precio_original": null
+    },
+    {
+      "id": 25,
+      "nombre": "Zamba",
+      "descripcion": "Mini Zamba (MONTADO FIJO...",
+      "descripcion_truncada": true,
+      "precio_actual": 650000,
+      "precio_original": null
+    },
+    {
+      "id": 26,
+      "nombre": "Fútbol-POOL",
+      "descripcion": "Pelotas de futbol numeradas...",
+      "descripcion_truncada": true,
+      "precio_actual": 350000,
+      "precio_original": null
+    },
+    {
+      "id": 27,
+      "nombre": "DARDO-Fut",
+      "descripcion": "2 a 3 pelotas con sistema vel...",
+      "descripcion_truncada": true,
+      "precio_actual": 225000,
+      "precio_original": null
+    },
+    {
+      "id": 28,
+      "nombre": "Combo de Juegos",
+      "descripcion": "Algunas indicaciones general...",
+      "descripcion_truncada": true,
+      "precio_actual": 495000,
+      "precio_original": 550000
+    },
+    {
+      "id": 29,
+      "nombre": "Juegos Árcade",
+      "descripcion": "🎮 ¡Revive la Magia del Arcad...",
+      "descripcion_truncada": true,
+      "precio_actual": null,
+      "precio_original": null
+    },
+    {
+      "id": 30,
+      "nombre": "Juegos Acuáticos - Super Match",
+      "descripcion": null,
+      "descripcion_truncada": false,
+      "precio_actual": null,
+      "precio_original": null,
+      "notas": "Ítem cortado al final de la última captura, sin descripción ni precio visibles."
+    }
+  ]
+}

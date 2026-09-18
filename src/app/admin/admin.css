@@ -1,0 +1,161 @@
+:root {
+  --br-orange: #ff7a00;
+  --br-ink: #b34d00;
+  --br-bg: #fdf8f2;
+  --br-card: #fff;
+  --br-line: #e7ddd0;
+  --br-text: #241505;
+  --br-text-soft: #7a6a5a;
+}
+
+.admin-shell {
+  min-height: 100vh;
+  background: var(--br-bg);
+  color: var(--br-text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.admin-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--br-line);
+  background: var(--br-card);
+}
+.admin-nav-brand {
+  font-weight: 800;
+  color: var(--br-ink);
+  margin-right: 20px;
+}
+.admin-nav a {
+  padding: 6px 12px;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--br-text-soft);
+  font-size: 0.9rem;
+}
+.admin-nav a.active,
+.admin-nav a:hover {
+  background: color-mix(in srgb, var(--br-orange) 14%, transparent);
+  color: var(--br-ink);
+}
+.admin-nav form {
+  margin-left: auto;
+}
+.admin-nav button {
+  border: none;
+  background: transparent;
+  color: var(--br-text-soft);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.admin-main {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+}
+.admin-main h1 {
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+}
+
+.admin-card {
+  background: var(--br-card);
+  border: 1px solid var(--br-line);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+table.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+table.admin-table th,
+table.admin-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--br-line);
+  vertical-align: top;
+}
+table.admin-table th {
+  color: var(--br-text-soft);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.admin-form {
+  display: grid;
+  gap: 10px;
+  max-width: 480px;
+}
+.admin-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--br-text-soft);
+}
+.admin-form input,
+.admin-form textarea,
+.admin-form select {
+  font: inherit;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--br-line);
+}
+.admin-form .checkbox-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  background: var(--br-orange);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.admin-btn.secondary {
+  background: transparent;
+  color: var(--br-ink);
+  border: 1px solid var(--br-line);
+}
+.admin-btn.danger {
+  background: #b3261e;
+}
+
+.admin-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.admin-badge.pendiente {
+  background: #fde8cc;
+  color: #8a5000;
+}
+.admin-badge.confirmada {
+  background: #d9f2df;
+  color: #1e6b34;
+}
+.admin-badge.cancelada {
+  background: #f4d8d5;
+  color: #8a2a20;
+}
+
+.admin-error {
+  color: #b3261e;
+  font-size: 0.85rem;
+}
