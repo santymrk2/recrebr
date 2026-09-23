@@ -7,10 +7,15 @@ export type Product = {
   image_urls: string[];
   is_bookable: boolean;
   is_active: boolean;
+  is_featured: boolean;
+  category: string | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
 };
+
+export const PRODUCT_CATEGORIES = ["Inflables", "Animación", "Mobiliario", "Otros"] as const;
+export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
 
 export type AvailabilityBlock = {
   id: string;

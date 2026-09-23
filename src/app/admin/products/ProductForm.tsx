@@ -1,3 +1,4 @@
+import { PRODUCT_CATEGORIES } from "@/lib/types";
 import type { Product } from "@/lib/types";
 
 export function ProductForm({
@@ -49,6 +50,17 @@ export function ProductForm({
         Orden (menor = aparece primero)
         <input name="sort_order" type="number" defaultValue={product?.sort_order ?? 0} />
       </label>
+      <label>
+        Categoría
+        <select name="category" defaultValue={product?.category ?? ""}>
+          <option value="">Sin categoría</option>
+          {PRODUCT_CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </label>
       <label className="checkbox-row">
         <input
           type="checkbox"
@@ -60,6 +72,14 @@ export function ProductForm({
       <label className="checkbox-row">
         <input type="checkbox" name="is_active" defaultChecked={product?.is_active ?? true} />
         Visible en la web
+      </label>
+      <label className="checkbox-row">
+        <input
+          type="checkbox"
+          name="is_featured"
+          defaultChecked={product?.is_featured ?? false}
+        />
+        Destacado en la home (preview de 2-3 juegos antes del catálogo completo)
       </label>
 
       {error && <p className="admin-error">{error}</p>}

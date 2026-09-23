@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { CatalogGrid } from "./CatalogGrid";
-import type { Product } from "@/lib/types";
 
 // La sección "Juegos" del sitio legado se inyecta como HTML estático
 // (para no tocar el markup original) con un <div id="catalog-root">
 // vacío adentro. Este componente espera a que ese nodo exista en el
-// DOM y hace un portal del catálogo (React) ahí adentro.
-export function CatalogPortal({ products }: { products: Product[] }) {
+// DOM y hace un portal de `children` (React) ahí adentro.
+export function CatalogPortal({ children }: { children: ReactNode }) {
   const [root, setRoot] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -32,5 +30,5 @@ export function CatalogPortal({ products }: { products: Product[] }) {
   }, []);
 
   if (!root) return null;
-  return createPortal(<CatalogGrid products={products} />, root);
+  return createPortal(children, root);
 }

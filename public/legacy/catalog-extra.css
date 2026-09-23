@@ -35,6 +35,134 @@
   color: var(--text-soft);
 }
 
+/* ---------- CTA "Conocé nuestro catálogo" (home) ---------- */
+.juegos-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 2.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- Tarjetas destacadas (home): solo foto + nombre ---------- */
+.game-card-featured .game-body {
+  padding: 16px 18px;
+}
+.game-card-featured .game-body h3 {
+  margin: 0;
+}
+
+/* ---------- Página /catalogo: header propio con logo animado ---------- */
+.catalogo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px clamp(20px, 5vw, 56px);
+  border-bottom: 1px solid var(--line);
+}
+.catalogo-header-logo {
+  text-decoration: none;
+}
+.catalogo-header-logo .display {
+  display: inline-block;
+  font-size: 1.6rem;
+  color: var(--orange);
+  animation: catalogo-logo-float 3.6s ease-in-out infinite;
+}
+@keyframes catalogo-logo-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(1deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .catalogo-header-logo .display {
+    animation: none;
+  }
+}
+
+/* ---------- Explorador de catálogo: filtros + orden ---------- */
+.catalog-explorer {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 32px clamp(20px, 5vw, 56px) 60px;
+}
+.catalog-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  margin-bottom: 2.2rem;
+}
+.catalog-filters input[type="search"],
+.catalog-filters input[type="number"],
+.catalog-filters select {
+  font: inherit;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+}
+.catalog-filters > label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: var(--text-soft);
+}
+.catalog-category-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.catalog-category-pills button {
+  font: inherit;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text-soft);
+  cursor: pointer;
+}
+.catalog-category-pills button.active {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: #fff;
+}
+.catalog-price-range {
+  display: flex;
+  gap: 10px;
+}
+.catalog-price-range label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: var(--text-soft);
+}
+
+/* ---------- Página /catalogo: footer propio (liviano, sin animaciones) ---------- */
+.catalogo-footer {
+  border-top: 1px solid var(--line);
+  padding: 32px clamp(20px, 5vw, 56px) 40px;
+  color: var(--text-soft);
+}
+.catalogo-footer p {
+  margin: 0 0 10px;
+}
+.catalogo-footer a {
+  color: inherit;
+}
+.catalogo-footer-brand {
+  text-decoration: none;
+  font-size: 1.3rem;
+  color: var(--orange);
+}
+
 button.btn-wsp {
   cursor: pointer;
   border: none;

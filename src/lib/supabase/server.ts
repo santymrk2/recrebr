@@ -9,7 +9,7 @@ export function createSupabaseServerClient() {
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
         get(name: string) {
@@ -35,13 +35,13 @@ export function createSupabaseServerClient() {
   );
 }
 
-// Cliente "admin": usa la service role key, bypasea RLS.
+// Cliente "admin": usa la secret key, bypasea RLS.
 // SOLO se importa desde Server Actions / route handlers, nunca
 // desde código que se envía al navegador.
 export function createSupabaseAdminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.SUPABASE_SECRET_KEY!,
     { auth: { persistSession: false } },
   );
 }

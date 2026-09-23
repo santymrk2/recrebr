@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { CatalogPortal } from "@/components/CatalogPortal";
+import { FeaturedGames } from "@/components/FeaturedGames";
 import type { Product } from "@/lib/types";
 
 // El hero 3D, el nav flotante, el menú mobile y el footer se traen
@@ -13,13 +14,14 @@ function readLegacyFile(relativePath: string) {
   return fs.readFileSync(path.join(process.cwd(), "public", "legacy", relativePath), "utf-8");
 }
 
-async function getProducts(): Promise<Product[]> {
+async function getFeaturedProducts(): Promise<Product[]> {
   try {
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
       .from("products")
       .select("*")
       .eq("is_active", true)
+      .eq("is_featured", true)
       .order("sort_order", { ascending: true });
 
     if (error) throw error;
@@ -36,7 +38,7 @@ export default async function HomePage() {
   const markup = readLegacyFile("markup.html");
   const loaderJs = readLegacyFile("scripts/loader.js");
   const interactionsJs = readLegacyFile("scripts/interactions.js");
-  const products = await getProducts();
+  const featuredProducts = await getFeaturedProducts();
 
   const importMap = JSON.stringify({
     imports: {
@@ -51,7 +53,9 @@ export default async function HomePage() {
       <link rel="stylesheet" href="/legacy/catalog-extra.css" />
 
       <div dangerouslySetInnerHTML={{ __html: markup }} />
-      <CatalogPortal products={products} />
+      <CatalogPortal>
+        <FeaturedGames products={featuredProducts} />
+      </CatalogPortal>
 
       {/* ===== Scripts, en el mismo orden que el sitio original ===== */}
       <script dangerouslySetInnerHTML={{ __html: loaderJs }} />

@@ -23,6 +23,8 @@ function productPayloadFromForm(formData: FormData) {
     image_urls: parseImageUrls(String(formData.get("image_urls") || "")),
     is_bookable: formData.get("is_bookable") === "on",
     is_active: formData.get("is_active") === "on",
+    is_featured: formData.get("is_featured") === "on",
+    category: String(formData.get("category") || "").trim() || null,
     sort_order: Number(formData.get("sort_order") || 0),
   };
 }

@@ -1,5 +1,5 @@
 // Carga scripts/catalogo-br.json en la tabla `products` de Supabase.
-// Uso: npm run seed  (necesita SUPABASE_SERVICE_ROLE_KEY en .env.local)
+// Uso: npm run seed  (necesita SUPABASE_SECRET_KEY en .env.local)
 //
 // OJO: catalogo-br.json viene de una transcripción manual de capturas
 // de pantalla del catálogo de WhatsApp. Varias descripciones están
@@ -8,7 +8,6 @@
 // backoffice (/admin/products) después de correr el seed — no lo uses
 // como catálogo final tal cual.
 
-import "dotenv/config";
 import fs from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
@@ -25,19 +24,23 @@ type CatalogItem = {
 
 async function main() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceKey = process.env.SUPABASE_SECRET_KEY;
 
   if (!url || !serviceKey) {
     console.error(
-      "Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en el entorno (.env.local).",
+      "Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SECRET_KEY en el entorno (.env.local).",
     );
     process.exit(1);
   }
 
-  const supabase = createClient(url, serviceKey, { auth: { persistSession: false } });
+  const supabase = createClient(url, serviceKey, {
+    auth: { persistSession: false },
+  });
 
   const filePath = path.join(process.cwd(), "scripts", "catalogo-br.json");
-  const raw = JSON.parse(fs.readFileSync(filePath, "utf-8")) as { items: CatalogItem[] };
+  const raw = JSON.parse(fs.readFileSync(filePath, "utf-8")) as {
+    items: CatalogItem[];
+  };
 
   const rows = raw.items
     .filter((item) => item.nombre) // se salta el item ambiguo #1 si no tiene nombre confiable
@@ -60,7 +63,9 @@ async function main() {
     process.exit(1);
   }
 
-  console.log("Listo. Revisá /admin/products para completar fotos, precios dudosos y qué");
+  console.log(
+    "Listo. Revisá /admin/products para completar fotos, precios dudosos y qué",
+  );
   console.log("productos marcar como reservables por calendario.");
 }
 

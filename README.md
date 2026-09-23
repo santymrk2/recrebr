@@ -50,13 +50,26 @@ cuanto sigas los pasos de abajo.
 3. En **Authentication → Users**, creá manualmente un usuario (tu email +
    una contraseña) — ese va a ser el login del backoffice. No hace falta
    sistema de registro público, solo este usuario.
-4. En **Project Settings → API**, copiá:
+4. En **Project Settings → API Keys** (pestaña "Publishable and secret API
+   keys" — Supabase está migrando de `anon`/`service_role` a este esquema
+   nuevo), copiá:
    - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
-   - `anon public` key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` (¡nunca la subas a un
-     repo público ni la uses en código de cliente!)
+   - **Publishable key** (`sb_publishable_...`) → `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+   - **Secret key** (`sb_secret_...`) → `SUPABASE_SECRET_KEY` (¡nunca la
+     subas a un repo público ni la uses en código de cliente!)
+
+   Si tu proyecto todavía muestra las keys viejas (`anon` / `service_role`
+   en vez de `publishable` / `secret`), también funcionan: pegá la `anon`
+   en `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y la `service_role` en
+   `SUPABASE_SECRET_KEY`, son intercambiables durante la migración.
 
 ## 2. Configurar variables de entorno
+
+El archivo `.env.example` es un **archivo oculto** (empieza con punto), así
+que tu explorador de archivos puede no mostrarlo por defecto — en Mac
+Finder tocá `Cmd + Shift + .` para ver ocultos, en Windows activá "elementos
+ocultos" en la pestaña Vista del Explorador. Si preferís, en el zip también
+te dejé una copia visible sin el punto: `env.example.txt`.
 
 ```bash
 cp .env.example .env.local
