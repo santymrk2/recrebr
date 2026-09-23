@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-type IconName = "birthday" | "school" | "church" | "business" | "family" | "arrow" | "chat";
+type IconName = "birthday" | "school" | "church" | "business" | "family" | "arrow";
 
 export function RecrebrIcon({ name, title }: { name: IconName; title?: string }) {
   const common = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": title ? undefined : true };
@@ -11,7 +11,6 @@ export function RecrebrIcon({ name, title }: { name: IconName; title?: string })
     business: <><path d="M4 20V8h16v12M8 8V5h8v3M3 12h18M10 16h4" /></>,
     family: <><circle cx="8" cy="7" r="2.5" /><circle cx="16" cy="7" r="2.5" /><path d="M3.5 20v-3.5a4.5 4.5 0 0 1 9 0V20m-2-1v-2.5a4.5 4.5 0 0 1 9 0V20" /></>,
     arrow: <><path d="M5 12h14M13 6l6 6-6 6" /></>,
-    chat: <><path d="M20 11.5a7.5 7.5 0 0 1-10.8 6.7L4 20l1.8-4.6A7.5 7.5 0 1 1 20 11.5Z" /><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" /></>,
   } satisfies Record<IconName, ReactNode>;
 
   return <svg {...common} role={title ? "img" : undefined}>{title ? <title>{title}</title> : null}{paths[name]}</svg>;
