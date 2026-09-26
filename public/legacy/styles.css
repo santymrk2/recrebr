@@ -78,6 +78,9 @@
         overflow: hidden;
         pointer-events: none;
         user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -webkit-touch-callout: none;
         color: var(--orange);
         font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
         font-size: clamp(110px, 15vw, 240px);
@@ -106,6 +109,9 @@
       .background-track span {
         display: block;
         flex-shrink: 0;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
       }
       @keyframes marquee {
         from {
@@ -129,16 +135,10 @@
         pointer-events: none;
         z-index: 60;
       }
-      @media (hover: none) {
-        #scene.is-interactive {
-          pointer-events: none;
-        }
-      }
       .pin-hit {
         position: fixed;
         top: 0;
         left: 0;
-        right: 0;
         height: 0;
         z-index: 4;
         pointer-events: none;
@@ -155,6 +155,9 @@
         display: block;
         width: 100%;
         height: 100%;
+        /* El scroll vertical siempre es del navegador; el gesto horizontal sí
+           lo usan las letras 3D. La banda de .pin-hit (touch-action: none) es
+           la única zona donde la letra se agarra en 2D. */
         touch-action: pan-y;
         cursor: grab;
       }

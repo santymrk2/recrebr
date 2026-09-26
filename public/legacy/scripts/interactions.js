@@ -4,6 +4,7 @@
       (function thinkBubble() {
         const bubble = document.getElementById("thinkBubble");
         if (!bubble) return;
+        const REAPPEAR_MS = 20000;
         let hidden = false;
         let timeout = null;
         const show = () => {
@@ -15,21 +16,15 @@
         };
         const scheduleNext = () => {
           clearTimeout(timeout);
-          timeout = setTimeout(show, 20_000);
+          timeout = setTimeout(show, REAPEAR_MS);
         };
-        // Cada toque esconde la nube y rearma el timer: si la persona se
-        // olvida de las letras, a los 20s vuelve a aparecer sola.
-        for (const id of ["pinHit", "scene"]) {
-          document.getElementById(id)?.addEventListener(
-            "pointerdown",
-            () => {
-              bubble.classList.add("is-hidden");
-              hidden = true;
-              scheduleNext();
-            },
-            { passive: true },
-          );
-        }
+        // hero3d.js dispara esto solo cuando el raycast acierta una letra, así
+        // que un toque en cualquier parte del hero no la esconde.
+        document.addEventListener("br:lettersgrab", () => {
+          bubble.classList.add("is-hidden");
+          hidden = true;
+          scheduleNext();
+        });
       })();
 
       /* -------- El hint "Desliza" del hero desaparece al primer scroll -------- */

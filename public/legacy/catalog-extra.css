@@ -136,12 +136,21 @@
     transform: translate(-50%, calc(-100% - 7px));
   }
 }
+/* En pantallas angostas el offset en px se come el clamp y la nube se pega a
+   la R: se achica la separación. */
+@media (max-width: 720px) {
+  .think-bubble {
+    --bubble-dx: 46px;
+    --bubble-dy: -34px;
+    padding: 10px 18px 12px;
+  }
+}
 
 /* ---------- Hint de scroll del hero: punto que sube + "Desliza" ---------- */
 .scroll-cue {
   position: absolute;
   left: 50%;
-  bottom: 21%;
+  bottom: 17%;
   transform: translateX(-50%);
   z-index: 5;
   display: flex;
@@ -188,7 +197,7 @@
 }
 @media (max-width: 600px) {
   .scroll-cue {
-    bottom: 24%;
+    bottom: 19%;
   }
 }
 @media (max-height: 620px) {

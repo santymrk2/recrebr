@@ -44,6 +44,9 @@
       const reduceMotion = matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
+      // En táctil la banda de drag se agranda y las letras parkadas bajan
+      // para caer en zona de dedo (y no bajo la barra del navegador).
+      const coarsePointer = matchMedia("(hover: none)").matches;
 
       const footBrand = document.getElementById("footBrandText");
       const footerPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
@@ -257,7 +260,10 @@
       }
 
       function computePinTarget() {
-        pinTargetY = getViewportBounds().top - PIN_TOP_MARGIN;
+        // En móvil las letras se parkean más abajo: arriba quedan debajo de
+        // la barra del navegador y no se pueden tocar.
+        pinTargetY =
+          getViewportBounds().top - (coarsePointer ? 1.75 : PIN_TOP_MARGIN);
       }
 
       function updateNavToggleHidden(max) {
@@ -313,7 +319,10 @@
         }
         if (footerProgress <= 0.001) return;
 
-        screenToWorld(rect.left, rect.top + rect.height / 2, footerTarget);
+        /* El centro del trio tiene que caer en el CENTRO del texto del footer:
+           con el borde izquierdo + el offset sumado, el grupo quedaba corrido
+           dos medias anchuras a la derecha de la palabra. */
+        screenToWorld(rect.left + rect.width / 2, rect.top + rect.height / 2, footerTarget);
         screenToWorld(rect.left, rect.top, footerProbe);
         const yTop = footerProbe.y;
         screenToWorld(rect.left, rect.bottom, footerProbe);
@@ -323,10 +332,7 @@
         footerScale =
           (rectWorldH * FOOTER_CAP_RATIO) / (2 * ref.colliderHalf.hy);
         footerSpread = footerScale * FOOTER_SPREAD_RATIO;
-        footerOriginX =
-          footerTarget.x +
-          Math.abs(ref.baseHomeX) * footerSpread +
-          ref.colliderHalf.hx * footerScale;
+        footerOriginX = footerTarget.x - ref.colliderHalf.hx * footerScale;
       }
 
       function applyPinPosition() {
@@ -528,6 +534,11 @@
         item.previousDragPoint.copy(dragPoint);
         item.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
         item.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+        // Aviso real de "agarraron una letra" (no de cualquier toque): lo usa
+        // la nubecita "Moveme" para esconderse.
+        document.dispatchEvent(
+          new CustomEvent("br:lettersgrab", { detail: { text: item.text } }),
+        );
         event.currentTarget.classList.add("dragging");
         event.currentTarget.setPointerCapture?.(event.pointerId);
       }
@@ -567,10 +578,12 @@
 
       function updateReturningLetters(delta) {
         const SPRING = 8.5,
-          RETURN_DAMPING = 2.8,
+          /* Críticamente amortiguado (2*sqrt(SPRING) = 5.83): con 2.8 el sistema
+             quedaba submietido y las letras seguían ondeando ±25px al asentarse. */
+          RETURN_DAMPING = 5.8,
           MAX_RETURN_SPEED = 3.2;
         const ROTATION_SPRING = 3.5,
-          ROTATION_DAMPING = 2.4,
+          ROTATION_DAMPING = 4.0,
           MAX_ANGULAR_SPEED = 5.0;
 
         for (const item of letters) {
@@ -582,10 +595,36 @@
           const distance = Math.sqrt(dx * dx + dy * dy);
           const velocity = item.body.linvel();
 
+          /* Tras el viaje al footer la letra queda contra el borde izquierdo del
+             mundo, a ~5 unidades de casa. Con el tope de 3.2 u/s el resorte tarda
+             más de un segundo en devolverla y el hero se ve sin letras: a esa
+             distancia el muelle no aporta nada visual, así que se teletransporta. */
+          if (distance > 2.4) {
+            item.body.setTranslation(
+              {
+                x: item.homePosition.x,
+                y: item.homePosition.y,
+                z: item.homePosition.z,
+              },
+              true,
+            );
+            item.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+            item.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+            continue;
+          }
+
           let vx =
             velocity.x + (dx * SPRING - velocity.x * RETURN_DAMPING) * delta;
           let vy =
             velocity.y + (dy * SPRING - velocity.y * RETURN_DAMPING) * delta;
+
+          /* Cerca de casa el muelle queda submietido y la letra se queda orbitando
+             con ~1 u/s residuales; se le drena la velocidad para que se asiente. */
+          if (distance < 0.3) {
+            const bleed = 1 - Math.min(1, delta * 9);
+            vx *= bleed;
+            vy *= bleed;
+          }
 
           const speed = Math.sqrt(vx * vx + vy * vy);
           const speedCap = Math.max(MAX_RETURN_SPEED, distance * 5.5);
@@ -654,11 +693,20 @@
       }
 
       /* En el footer las letras las manda el scroll, sin resorte de por medio:
-         si no, llegan tarde y el texto ya se borró cuando todavía están lejos. */
+         si no, llegan tarde y el texto ya se borró cuando todavía están lejos.
+         El mismo criterio cierra el reposo en el hero: cuando la letra ya está
+         a menos de 0.14 de casa se fija ahí, porque el muelle (aunque crítico)
+         deja un rebote final de unos px que se lee como un temblor. */
       function driveFooterLetters() {
-        if (footerProgress <= 0.001 || mobileMenuOpen) return;
+        if (mobileMenuOpen) return;
         for (const item of letters) {
           if (item.isDragging) continue;
+          if (footerProgress <= 0.001) {
+            const t = item.body.translation();
+            const dx = item.homePosition.x - t.x;
+            const dy = item.homePosition.y - t.y;
+            if (dx * dx + dy * dy > 0.14 * 0.14) continue;
+          }
           item.body.setTranslation(
             {
               x: item.homePosition.x,
@@ -699,33 +747,46 @@
         const viewportHalfH =
           Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) *
           camera.position.z;
+        const viewportHalfW = viewportHalfH * camera.aspect;
+        const w = renderer.domElement.clientWidth || innerWidth;
         const h = renderer.domElement.clientHeight || innerHeight;
-        const pad = 12 / h;
+        // El margen se normaliza por eje: compartido, en un viewport angosto
+        // el horizontal quedaba en la mitad de píxeles.
+        const padY = (coarsePointer ? 18 : 12) / h;
+        const padX = (coarsePointer ? 18 : 12) / w;
         // El ancla de la nubecita se actualiza siempre: al inicio de la
         // página el hero todavía no cuenta como "pinned".
-        if (letters.length) updateThinkAnchor(viewportHalfH, pad, h);
-        const pinned =
-          scrollRiseSmooth > 0.999 &&
-          footerProgress < 0.02 &&
-          !mobileMenuOpen;
-        if (!letters.length || !pinned) {
+        if (letters.length) updateThinkAnchor(viewportHalfH, padY, h);
+        // La banda se queda apagada en el footer y con el menú abierto: es
+        // touch-action: none, así que taparla bloquearía el scroll de esa zona.
+        if (!letters.length || footerProgress >= 0.02 || mobileMenuOpen) {
           pinHit.classList.remove("active");
           return;
         }
         const probe = new THREE.Vector3();
         let top = 1,
-          bottom = -1;
+          bottom = -1,
+          left = 1,
+          right = -1;
         for (const item of letters) {
           probe.copy(item.mesh.position).project(camera);
-          const halfH =
-            (item.colliderHalf.hy * item.colliderScale) / viewportHalfH;
-          top = Math.min(top, probe.y - halfH - pad);
-          bottom = Math.max(bottom, probe.y + halfH + pad);
+          const halfH = (item.colliderHalf.hy * item.colliderScale) / viewportHalfH;
+          const halfW = (item.colliderHalf.hx * item.colliderScale) / viewportHalfW;
+          top = Math.min(top, probe.y - halfH - padY);
+          bottom = Math.max(bottom, probe.y + halfH + padY);
+          left = Math.min(left, probe.x - halfW - padX);
+          right = Math.max(right, probe.x + halfW + padX);
         }
         const pxTop = Math.max(((1 - bottom) / 2) * h, 0);
         const pxHeight = Math.max(((1 - top) / 2) * h - pxTop, 0);
+        const pxLeft = Math.max(((left + 1) / 2) * w, 0);
+        const pxRight = ((right + 1) / 2) * w;
         pinHit.style.top = pxTop + "px";
         pinHit.style.height = pxHeight + "px";
+        // Caja angosta sobre las letras: afuera de ella el scroll funciona
+        // siempre, adentro la letra se agarra en 2D.
+        pinHit.style.left = pxLeft + "px";
+        pinHit.style.width = Math.max(pxRight - pxLeft, 0) + "px";
         pinHit.classList.add("active");
       }
 
