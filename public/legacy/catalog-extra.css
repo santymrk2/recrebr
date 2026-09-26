@@ -83,8 +83,8 @@
    --bubble-dx / --bubble-dy corrun la nube respecto de la R: +
    a la derecha, - hacia arriba. Se ajustan acá si hay que moverla. */
 .think-bubble {
-  --bubble-dx: 62px;
-  --bubble-dy: -56px;
+  --bubble-dx: 78px;
+  --bubble-dy: -40px;
   position: absolute;
   left: clamp(76px, calc(var(--r-x, 50%) + var(--bubble-dx)), calc(100% - 76px));
   top: calc(var(--r-top, 34%) + var(--bubble-dy));
