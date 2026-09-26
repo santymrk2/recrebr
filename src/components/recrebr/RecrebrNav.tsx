@@ -33,7 +33,7 @@ export function RecrebrNav() {
     <button className="nav-menu" aria-expanded={open} aria-controls="site-menu" aria-label={open ? "Cerrar menú" : "Abrir menú"} onClick={() => setOpen(!open)}><i /><i /><i /></button>
     <nav id="site-menu" className={open ? "open" : ""} aria-label="Navegación principal">
       {links.map(([id, label]) => <a className={active === id ? "active" : ""} href={`#${id}`} onClick={() => setOpen(false)} key={id}>{label}</a>)}
-      <a className="nav-v1" href="/v1">Ver sitio clásico</a>
+      <a className="nav-v1" href="/">Ver sitio clásico</a>
     </nav>
     <a className="nav-wa" href={buildWhatsAppLink("Hola! Quiero armar mi evento con RECREBR.")} target="_blank" rel="noreferrer">WhatsApp <b>↗</b></a>
   </header>;

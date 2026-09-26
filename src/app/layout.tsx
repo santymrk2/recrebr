@@ -17,7 +17,6 @@ export const metadata: Metadata = {
     "juegos para iglesias",
     "eventos corporativos",
   ],
-  alternates: { canonical: "/" },
   robots: { index: true, follow: true },
   openGraph: {
     title: "RECREBR — La recreación se vive",
