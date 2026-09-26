@@ -46,6 +46,7 @@
 
       const heroWrap = document.getElementById("hero-wrap");
       const PIN_TOP_MARGIN = 0.5;
+      const PIN_TOP_MARGIN_COARSE = 1.15;
       const PIN_SHRINK = 0.5;
       const PIN_SPREAD = 0.42;
       const PIN_FLOAT_Y = 0.034;
@@ -288,7 +289,8 @@
         // En móvil las letras se parkean más abajo: arriba quedan debajo de
         // la barra del navegador y no se pueden tocar.
         pinTargetY =
-          getViewportBounds().top - (coarsePointer ? 1.75 : PIN_TOP_MARGIN);
+          getViewportBounds().top -
+          (coarsePointer ? PIN_TOP_MARGIN_COARSE : PIN_TOP_MARGIN);
       }
 
       function updateNavToggleHidden(max) {
