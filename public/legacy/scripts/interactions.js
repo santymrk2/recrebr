@@ -16,7 +16,7 @@
         };
         const scheduleNext = () => {
           clearTimeout(timeout);
-          timeout = setTimeout(show, REAPEAR_MS);
+          timeout = setTimeout(show, REAPPEAR_MS);
         };
         // hero3d.js dispara esto solo cuando el raycast acierta una letra, así
         // que un toque en cualquier parte del hero no la esconde.

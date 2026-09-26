@@ -22,8 +22,27 @@
       const dragPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
       const dragPoint = new THREE.Vector3();
       const dragOffset = new THREE.Vector3();
+      const dragTarget = new THREE.Vector3();
       const timer = new THREE.Timer();
       const wallBodies = {};
+
+      /* Paso fijo de física + interpolación al render ("Fix Your Timestep"):
+         con world.timestep = delta del frame, cada paso duraba distinto (60/120
+         Hz, frames perdidos) y las letras avanzaban a saltos irregulares. */
+      const STEP = 1 / 120;
+      const MAX_STEPS = 8;
+      let accumulator = 0;
+      // El drag sigue al puntero con un filtro exponencial por paso, no con la
+      // velocidad del último pointermove (que se quedaba pegada si en un frame
+      // no llegaba evento y la letra se pasaba de largo).
+      const DRAG_RESPONSE = 32;
+      const DRAG_MAX_SPEED = 45;
+      const RELEASE_KEEP = 0.55;
+      const RELEASE_MAX_SPEED = 5;
+      let menuWasOpen = false;
+      const tmpQuat = new THREE.Quaternion();
+      const tmpEuler = new THREE.Euler();
+      const tmpPos = new THREE.Vector3();
 
       const heroWrap = document.getElementById("hero-wrap");
       const PIN_TOP_MARGIN = 0.5;
@@ -151,6 +170,7 @@
           scene.add(rim);
 
           world = new RAPIER.World({ x: 0, y: 0, z: 0 });
+          world.timestep = STEP;
           setupBoundaryWalls();
 
           const font = await new FontLoader().loadAsync(FONT_URL);
@@ -248,12 +268,17 @@
           baseHomeQuaternion: initialQuaternion.clone(),
           isDragging: false,
           returning: false,
+          // true mientras el scroll del footer maneja la letra (sin física).
+          scripted: false,
+          // Peso del flotado: baja a 0 al agarrarla para que no "nade" bajo el dedo.
+          floatMix: 1,
           baseHomeX: spec.x,
           baseHomeY: spec.y,
           homePosition: new THREE.Vector3(spec.x, spec.y, spec.z),
           homeQuaternion: initialQuaternion.clone(),
-          previousDragPoint: new THREE.Vector3(),
-          dragVelocity: new THREE.Vector3(),
+          lastHome: new THREE.Vector3(spec.x, spec.y, spec.z),
+          prevPos: new THREE.Vector3(spec.x, spec.y, spec.z),
+          prevQuat: initialQuaternion.clone(),
         };
         mesh.userData.letter = item;
         letters.push(item);
@@ -319,9 +344,6 @@
         }
         if (footerProgress <= 0.001) return;
 
-        /* El centro del trio tiene que caer en el CENTRO del texto del footer:
-           con el borde izquierdo + el offset sumado, el grupo quedaba corrido
-           dos medias anchuras a la derecha de la palabra. */
         screenToWorld(rect.left + rect.width / 2, rect.top + rect.height / 2, footerTarget);
         screenToWorld(rect.left, rect.top, footerProbe);
         const yTop = footerProbe.y;
@@ -332,7 +354,20 @@
         footerScale =
           (rectWorldH * FOOTER_CAP_RATIO) / (2 * ref.colliderHalf.hy);
         footerSpread = footerScale * FOOTER_SPREAD_RATIO;
-        footerOriginX = footerTarget.x - ref.colliderHalf.hx * footerScale;
+
+        /* El borde izquierdo de la B va alineado con el texto del footer
+           ("Experiencias..."). Antes se centraba el trio y encima se restaba
+           media B, así que la B quedaba corrida a la izquierda del párrafo.
+           El borde se mide en el plano de la CARA FRONTAL de la letra: con
+           perspectiva, esa cara (z > 0) se proyecta más afuera que el plano
+           z = 0 y la B se veía ~10px más a la izquierda de lo calculado. */
+        footerPlane.constant = -ref.colliderHalf.hz * footerScale;
+        screenToWorld(rect.left, rect.top + rect.height / 2, footerProbe);
+        footerPlane.constant = 0;
+        footerOriginX =
+          footerProbe.x +
+          ref.colliderHalf.hx * footerScale -
+          ref.baseHomeX * footerSpread;
       }
 
       function applyPinPosition() {
@@ -528,10 +563,13 @@
         dragged = item;
         item.isDragging = true;
         item.returning = false;
-        dragPlane.constant = -item.mesh.position.z;
+        // El offset se toma del cuerpo físico, no del mesh: el mesh lleva el
+        // flotado encima y la letra pegaba un saltito de unos px al agarrarla.
+        const t = item.body.translation();
+        dragPlane.constant = -t.z;
         raycaster.ray.intersectPlane(dragPlane, dragPoint);
-        dragOffset.copy(item.mesh.position).sub(dragPoint);
-        item.previousDragPoint.copy(dragPoint);
+        dragOffset.set(t.x - dragPoint.x, t.y - dragPoint.y, 0);
+        dragTarget.set(t.x, t.y, 0);
         item.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
         item.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
         // Aviso real de "agarraron una letra" (no de cualquier toque): lo usa
@@ -548,21 +586,40 @@
         updatePointer(event);
         raycaster.setFromCamera(pointer, camera);
         if (!raycaster.ray.intersectPlane(dragPlane, dragPoint)) return;
-        const next = dragPoint.clone().add(dragOffset);
-        next.z = 0;
+        // Solo se guarda el objetivo: la velocidad se calcula en cada paso de
+        // física (applyDragVelocity), llegue o no un evento en ese frame.
+        dragTarget.set(dragPoint.x + dragOffset.x, dragPoint.y + dragOffset.y, 0);
+      }
+
+      function applyDragVelocity(dt) {
+        if (!dragged) return;
         const current = dragged.body.translation();
-        const vx = (next.x - current.x) * 22;
-        const vy = (next.y - current.y) * 22;
+        // Filtro exponencial independiente del framerate: en cada paso recorre
+        // la misma fracción del camino al puntero, sea 60 o 120 Hz.
+        const gain = (1 - Math.exp(-DRAG_RESPONSE * dt)) / dt;
+        let vx = (dragTarget.x - current.x) * gain;
+        let vy = (dragTarget.y - current.y) * gain;
+        const speed = Math.hypot(vx, vy);
+        if (speed > DRAG_MAX_SPEED) {
+          vx *= DRAG_MAX_SPEED / speed;
+          vy *= DRAG_MAX_SPEED / speed;
+        }
         dragged.body.setLinvel({ x: vx, y: vy, z: 0 }, true);
         dragged.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
-        dragged.previousDragPoint.copy(next);
       }
 
       function onPointerUp(event) {
         if (!dragged) return;
         const item = dragged;
         item.isDragging = false;
-        item.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+        /* Al soltar se conserva parte de la inercia: frenarla en seco a 0 y
+           que después el resorte la arranque era el "tirón" al soltar. */
+        const v = item.body.linvel();
+        const keep = Math.min(
+          RELEASE_KEEP,
+          RELEASE_MAX_SPEED / Math.max(Math.hypot(v.x, v.y), 1e-6),
+        );
+        item.body.setLinvel({ x: v.x * keep, y: v.y * keep, z: 0 }, true);
         item.returning = true;
         dragged = null;
         event.currentTarget.releasePointerCapture?.(event.pointerId);
@@ -576,82 +633,50 @@
         item.returning = true;
       }
 
-      function updateReturningLetters(delta) {
-        const SPRING = 8.5,
-          /* Críticamente amortiguado (2*sqrt(SPRING) = 5.83): con 2.8 el sistema
-             quedaba submietido y las letras seguían ondeando ±25px al asentarse. */
-          RETURN_DAMPING = 5.8,
+      /* Resorte de retorno. Antes había tres atajos que se veían como saltos:
+         - teletransporte a casa si la letra estaba a más de 2.4 (si la
+           arrastrabas lejos y soltabas, desaparecía y aparecía en su lugar);
+         - un "drenaje" de velocidad que se activaba de golpe a 0.3 de casa
+           (frenazo visible en el último tramo);
+         - un tope duro de velocidad que la cortaba en un solo paso.
+         Ahora: resorte críticamente amortiguado más rígido (w = 5 rad/s, llega
+         en ~1s sin rebote) y un tope suave que solo actúa en tiros violentos.
+         El seguimiento del scroll ya no depende del resorte (carryWithHome),
+         así que no hace falta "clavar" la letra cerca de casa. */
+      function updateReturningLetters(dt) {
+        const SPRING = 25,
+          RETURN_DAMPING = 10,
           MAX_RETURN_SPEED = 3.2;
-        const ROTATION_SPRING = 3.5,
-          ROTATION_DAMPING = 4.0,
+        const ROTATION_SPRING = 16,
+          ROTATION_DAMPING = 8,
           MAX_ANGULAR_SPEED = 5.0;
 
         for (const item of letters) {
-          if (item.isDragging) continue;
+          if (item.isDragging || item.scripted) continue;
 
           const current = item.body.translation();
           const dx = item.homePosition.x - current.x;
           const dy = item.homePosition.y - current.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+          const distance = Math.hypot(dx, dy);
           const velocity = item.body.linvel();
 
-          /* Tras el viaje al footer la letra queda contra el borde izquierdo del
-             mundo, a ~5 unidades de casa. Con el tope de 3.2 u/s el resorte tarda
-             más de un segundo en devolverla y el hero se ve sin letras: a esa
-             distancia el muelle no aporta nada visual, así que se teletransporta. */
-          if (distance > 2.4) {
-            item.body.setTranslation(
-              {
-                x: item.homePosition.x,
-                y: item.homePosition.y,
-                z: item.homePosition.z,
-              },
-              true,
-            );
-            item.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
-            item.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
-            continue;
-          }
+          let vx = velocity.x + (dx * SPRING - velocity.x * RETURN_DAMPING) * dt;
+          let vy = velocity.y + (dy * SPRING - velocity.y * RETURN_DAMPING) * dt;
 
-          let vx =
-            velocity.x + (dx * SPRING - velocity.x * RETURN_DAMPING) * delta;
-          let vy =
-            velocity.y + (dy * SPRING - velocity.y * RETURN_DAMPING) * delta;
-
-          /* Cerca de casa el muelle queda submietido y la letra se queda orbitando
-             con ~1 u/s residuales; se le drena la velocidad para que se asiente. */
-          if (distance < 0.3) {
-            const bleed = 1 - Math.min(1, delta * 9);
-            vx *= bleed;
-            vy *= bleed;
-          }
-
-          const speed = Math.sqrt(vx * vx + vy * vy);
+          const speed = Math.hypot(vx, vy);
           const speedCap = Math.max(MAX_RETURN_SPEED, distance * 5.5);
           if (speed > speedCap) {
-            const scale = speedCap / speed;
-            vx *= scale;
-            vy *= scale;
+            // Se acerca al tope de a poco en vez de recortarlo en un paso.
+            const k = 1 - (1 - speedCap / speed) * Math.min(1, dt * 12);
+            vx *= k;
+            vy *= k;
           }
           item.body.setLinvel({ x: vx, y: vy, z: 0 }, true);
 
           const rotation = item.body.rotation();
-          const currentQuaternion = new THREE.Quaternion(
-            rotation.x,
-            rotation.y,
-            rotation.z,
-            rotation.w,
-          );
-          const euler = new THREE.Euler().setFromQuaternion(
-            currentQuaternion,
-            "XYZ",
-          );
-          const currentAngle = euler.z;
-          const homeEuler = new THREE.Euler().setFromQuaternion(
-            item.homeQuaternion,
-            "XYZ",
-          );
-          const homeAngle = homeEuler.z;
+          tmpQuat.set(rotation.x, rotation.y, rotation.z, rotation.w);
+          const currentAngle = tmpEuler.setFromQuaternion(tmpQuat, "XYZ").z;
+          const homeAngle = tmpEuler.setFromQuaternion(item.homeQuaternion, "XYZ").z;
 
           let angleDifference = homeAngle - currentAngle;
           while (angleDifference > Math.PI) angleDifference -= Math.PI * 2;
@@ -662,7 +687,7 @@
             angularVelocity.z +
             (angleDifference * ROTATION_SPRING -
               angularVelocity.z * ROTATION_DAMPING) *
-              delta;
+              dt;
           angularZ = THREE.MathUtils.clamp(
             angularZ,
             -MAX_ANGULAR_SPEED,
@@ -670,12 +695,12 @@
           );
           item.body.setAngvel({ x: 0, y: 0, z: angularZ }, true);
 
+          // Asentado final sub-píxel (~1px): corta la simulación residual.
           if (
-            distance < 0.012 &&
-            Math.abs(angleDifference) < 0.01 &&
-            Math.abs(vx) < 0.08 &&
-            Math.abs(vy) < 0.08 &&
-            Math.abs(angularZ) < 0.08
+            distance < 0.006 &&
+            Math.abs(angleDifference) < 0.004 &&
+            Math.hypot(vx, vy) < 0.05 &&
+            Math.abs(angularZ) < 0.05
           ) {
             item.body.setTranslation(
               {
@@ -692,54 +717,85 @@
         }
       }
 
-      /* En el footer las letras las manda el scroll, sin resorte de por medio:
-         si no, llegan tarde y el texto ya se borró cuando todavía están lejos.
-         El mismo criterio cierra el reposo en el hero: cuando la letra ya está
-         a menos de 0.14 de casa se fija ahí, porque el muelle (aunque crítico)
-         deja un rebote final de unos px que se lee como un temblor. */
-      function driveFooterLetters() {
-        if (mobileMenuOpen) return;
+      /* Mueve el cuerpo a una pose sin interpolar: el render no dibuja un
+         "barrido" desde la posición anterior. */
+      function placeBody(item, pos, quat) {
+        item.body.setTranslation({ x: pos.x, y: pos.y, z: pos.z }, true);
+        item.body.setRotation(
+          { x: quat.x, y: quat.y, z: quat.z, w: quat.w },
+          true,
+        );
+        item.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+        item.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+        item.prevPos.copy(pos);
+        item.prevQuat.copy(quat);
+      }
+
+      /* Cuando el "casa" de la letra se mueve con el scroll (el pin sube al
+         tope), la letra se mueve EXACTAMENTE lo mismo. Antes lo hacía el
+         resorte, que llega tarde, y para taparlo se la clavaba a casa cuando
+         estaba a menos de 0.14 (~20px): ese clavado era un salto visible al
+         soltar una letra, y peleaba con las colisiones cuando arrastrabas una
+         contra otra. Así el resorte solo corrige lo que movió el usuario.
+         Con el menú móvil no se arrastra: el vuelo al drawer lo anima el resorte. */
+      function carryWithHome() {
+        const menuToggled = mobileMenuOpen !== menuWasOpen;
+        menuWasOpen = mobileMenuOpen;
         for (const item of letters) {
-          if (item.isDragging) continue;
-          if (footerProgress <= 0.001) {
-            const t = item.body.translation();
-            const dx = item.homePosition.x - t.x;
-            const dy = item.homePosition.y - t.y;
-            if (dx * dx + dy * dy > 0.14 * 0.14) continue;
-          }
-          item.body.setTranslation(
-            {
-              x: item.homePosition.x,
-              y: item.homePosition.y,
-              z: item.homePosition.z,
-            },
-            true,
-          );
-          item.body.setRotation(
-            {
-              x: item.homeQuaternion.x,
-              y: item.homeQuaternion.y,
-              z: item.homeQuaternion.z,
-              w: item.homeQuaternion.w,
-            },
-            true,
-          );
-          item.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
-          item.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+          const dx = item.homePosition.x - item.lastHome.x;
+          const dy = item.homePosition.y - item.lastHome.y;
+          item.lastHome.copy(item.homePosition);
+          if (item.isDragging || item.scripted) continue;
+          if (mobileMenuOpen || menuToggled) continue;
+          if (dx === 0 && dy === 0) continue;
+          const t = item.body.translation();
+          item.body.setTranslation({ x: t.x + dx, y: t.y + dy, z: t.z }, true);
+          item.prevPos.x += dx;
+          item.prevPos.y += dy;
         }
       }
 
-      function syncPhysics() {
+      /* En el footer las letras las manda el scroll, sin resorte de por medio:
+         si no, llegan tarde y el texto ya se borró cuando todavía están lejos.
+         Al volver al hero, una letra que venía guiada por el scroll se deja
+         directo en su casa (el trayecto también lo definía el scroll); una
+         que tiró el usuario vuelve siempre con el resorte, nunca teletransportada. */
+      function driveFooterLetters() {
+        if (mobileMenuOpen) return;
+        const scripted = footerProgress > 0.001;
+        for (const item of letters) {
+          if (item.isDragging) continue;
+          if (!scripted) {
+            if (item.scripted) {
+              item.scripted = false;
+              placeBody(item, item.homePosition, item.homeQuaternion);
+            }
+            continue;
+          }
+          item.scripted = true;
+          placeBody(item, item.homePosition, item.homeQuaternion);
+        }
+      }
+
+      function capturePrevious() {
+        for (const item of letters) {
+          const t = item.body.translation();
+          const r = item.body.rotation();
+          item.prevPos.set(t.x, t.y, t.z);
+          item.prevQuat.set(r.x, r.y, r.z, r.w);
+        }
+      }
+
+      // Interpola entre el paso anterior y el actual según lo que sobró del
+      // acumulador: movimiento continuo aunque el monitor no vaya a 120 Hz.
+      function syncPhysics(alpha) {
         for (const item of letters) {
           const translation = item.body.translation();
           const rotation = item.body.rotation();
-          item.mesh.position.set(translation.x, translation.y, translation.z);
-          item.mesh.quaternion.set(
-            rotation.x,
-            rotation.y,
-            rotation.z,
-            rotation.w,
-          );
+          tmpPos.set(translation.x, translation.y, translation.z);
+          tmpQuat.set(rotation.x, rotation.y, rotation.z, rotation.w);
+          item.mesh.position.lerpVectors(item.prevPos, tmpPos, alpha);
+          item.mesh.quaternion.slerpQuaternions(item.prevQuat, tmpQuat, alpha);
         }
       }
 
@@ -811,20 +867,25 @@
         );
       }
 
-      function applyFloat(elapsed) {
+      function applyFloat(elapsed, dt) {
         // El flotado nunca llega a 0 en el footer: las letras quedan vivas
         // pero sin movimiento notorio.
         const amp = reduceMotion
           ? 0
           : (HERO_FLOAT + (1 - HERO_FLOAT) * scrollRiseSmooth) *
             (1 - footerProgress * 0.82);
-        if (amp < 0.001) return;
+        const ease = Math.min(1, dt * 4);
         for (const item of letters) {
+          // La letra agarrada deja de flotar de a poco (y retoma al soltarla):
+          // si no, se mecía unos px respecto del dedo durante todo el drag.
+          item.floatMix += ((item.isDragging ? 0 : 1) - item.floatMix) * ease;
+          const a = amp * item.floatMix;
+          if (a < 0.001) continue;
           const w =
             elapsed * PIN_FLOAT_SPEED * item.floatSpeed + item.floatPhase;
-          item.mesh.position.y += Math.sin(w) * PIN_FLOAT_Y * amp;
-          item.mesh.position.x += Math.cos(w * 0.73) * PIN_FLOAT_X * amp;
-          item.mesh.rotateZ(Math.sin(w * 0.61) * PIN_FLOAT_TILT * amp);
+          item.mesh.position.y += Math.sin(w) * PIN_FLOAT_Y * a;
+          item.mesh.position.x += Math.cos(w * 0.73) * PIN_FLOAT_X * a;
+          item.mesh.rotateZ(Math.sin(w * 0.61) * PIN_FLOAT_TILT * a);
         }
       }
 
@@ -844,17 +905,30 @@
       function animate() {
         requestAnimationFrame(animate);
         timer.update();
-        const delta = Math.min(timer.getDelta(), 0.033);
+        const delta = Math.min(timer.getDelta(), 0.1);
         scrollRiseSmooth +=
           (scrollRise - scrollRiseSmooth) * Math.min(1, delta * 7);
         updateFooterTarget();
         applyPinPosition();
-        updateReturningLetters(delta);
-        world.timestep = delta;
-        world.step();
+        carryWithHome();
+
+        accumulator += delta;
+        let steps = 0;
+        while (accumulator >= STEP && steps < MAX_STEPS) {
+          capturePrevious();
+          applyDragVelocity(STEP);
+          updateReturningLetters(STEP);
+          world.step();
+          accumulator -= STEP;
+          steps++;
+        }
+        // Si el frame vino muy atrasado (pestaña oculta, GC) se descarta el
+        // resto en vez de encadenar pasos y entrar en espiral.
+        if (accumulator >= STEP) accumulator = 0;
+
         driveFooterLetters();
-        syncPhysics();
-        applyFloat(timer.getElapsed());
+        syncPhysics(accumulator / STEP);
+        applyFloat(timer.getElapsed(), delta);
         applyPinnedTilt();
         updatePinHit();
         renderer.render(scene, camera);
