@@ -39,7 +39,6 @@ export default function HomePage() {
       <link rel="stylesheet" href="/legacy/catalog-extra.css" />
 
       <div dangerouslySetInnerHTML={{ __html: markup }} />
-      <a href="/v2" style={{ position: "fixed", top: 12, left: 12, zIndex: 10000, padding: "8px 10px", borderRadius: 99, background: "#ffffffdd", color: "#111", fontFamily: "Arial, sans-serif", fontSize: 12, textDecoration: "none" }}>Conocé la nueva RECREBR</a>
       <CatalogPortal>
         <GamesGrid />
       </CatalogPortal>

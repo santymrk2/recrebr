@@ -117,17 +117,34 @@
           },
         });
 
-        // Reveal general de bloques
-        document.querySelectorAll(".reveal").forEach((el, i) => {
+        // Reveal general de bloques. Los nodos con .reveal que aparecen
+        // DESPUÉS del load (las tarjetas de juegos que React portaliza
+        // en #catalog-root) también se animan: sin esto quedan en
+        // opacity: 0 y no se ven nunca.
+        const revealed = new WeakSet();
+        let revealIndex = 0;
+        const revealNode = (el) => {
+          if (!(el instanceof Element) || revealed.has(el)) return;
+          revealed.add(el);
           gsap.to(el, {
             opacity: 1,
             y: 0,
             duration: 0.8,
-            delay: (i % 6) * 0.06,
+            delay: (revealIndex++ % 6) * 0.06,
             ease: "power3.out",
             scrollTrigger: { trigger: el, start: "top 88%" },
           });
-        });
+        };
+        document.querySelectorAll(".reveal").forEach(revealNode);
+        new MutationObserver((entries) => {
+          for (const entry of entries) {
+            for (const node of entry.addedNodes) {
+              if (!(node instanceof Element)) continue;
+              if (node.classList.contains("reveal")) revealNode(node);
+              node.querySelectorAll(".reveal").forEach(revealNode);
+            }
+          }
+        }).observe(document.body, { childList: true, subtree: true });
 
         // Texto que se resalta en partes a medida que se scrollea
         const textColor = getComputedStyle(document.documentElement)
