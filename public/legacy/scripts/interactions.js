@@ -1,5 +1,18 @@
       document.getElementById("year").textContent = new Date().getFullYear();
 
+      /* -------- El hint "Desliza" del hero desaparece al primer scroll -------- */
+      (function hideScrollCue() {
+        const cue = document.querySelector(".scroll-cue");
+        if (!cue) return;
+        addEventListener(
+          "scroll",
+          () => {
+            if (scrollY > 40) cue.classList.add("is-hidden");
+          },
+          { passive: true, once: true },
+        );
+      })();
+
       /* -------- Ocultar el navbar al llegar al footer -------- */
       (function hideNavOnFooter() {
         const hud = document.querySelector(".hud");

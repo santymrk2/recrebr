@@ -9,45 +9,22 @@ export const metadata: Metadata = {
 
 import fs from "node:fs";
 import path from "node:path";
-import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { CatalogPortal } from "@/components/CatalogPortal";
-import { FeaturedGames } from "@/components/FeaturedGames";
-import type { Product } from "@/lib/types";
+import { GamesGrid } from "@/components/GamesGrid";
 
 // El hero 3D, el nav flotante, el menú mobile y el footer se traen
 // TAL CUAL del sitio original (public/legacy/markup.html), para no
 // arriesgar romper nada de esas animaciones al portarlas a JSX a mano.
-// La sección de catálogo ("Juegos") es la única parte reemplazada por
-// un mount point (#catalog-root) donde se porta el <CatalogGrid> real.
+// La sección "Juegos" es la única parte reemplazada por un mount point
+// (#catalog-root) donde se porta el <GamesGrid> (cada juego abre WhatsApp).
 function readLegacyFile(relativePath: string) {
   return fs.readFileSync(path.join(process.cwd(), "public", "legacy", relativePath), "utf-8");
 }
 
-async function getFeaturedProducts(): Promise<Product[]> {
-  try {
-    const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .eq("is_active", true)
-      .eq("is_featured", true)
-      .order("sort_order", { ascending: true });
-
-    if (error) throw error;
-    return data as Product[];
-  } catch (err) {
-    // Si todavía no configuraste Supabase, la home no debe romperse:
-    // se muestra vacío y se loguea el motivo en el server.
-    console.warn("No se pudo leer el catálogo de Supabase:", err);
-    return [];
-  }
-}
-
-export default async function HomePage() {
+export default function HomePage() {
   const markup = readLegacyFile("markup.html");
   const loaderJs = readLegacyFile("scripts/loader.js");
   const interactionsJs = readLegacyFile("scripts/interactions.js");
-  const featuredProducts = await getFeaturedProducts();
 
   const importMap = JSON.stringify({
     imports: {
@@ -64,7 +41,7 @@ export default async function HomePage() {
       <div dangerouslySetInnerHTML={{ __html: markup }} />
       <a href="/v2" style={{ position: "fixed", top: 12, left: 12, zIndex: 10000, padding: "8px 10px", borderRadius: 99, background: "#ffffffdd", color: "#111", fontFamily: "Arial, sans-serif", fontSize: 12, textDecoration: "none" }}>Conocé la nueva RECREBR</a>
       <CatalogPortal>
-        <FeaturedGames products={featuredProducts} />
+        <GamesGrid />
       </CatalogPortal>
 
       {/* ===== Scripts, en el mismo orden que el sitio original ===== */}
