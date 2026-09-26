@@ -18,12 +18,13 @@
           </div>
         </div>
         <div class="hero-caption">
-          <p>Experiencias recreativas para compartir, jugar y hacer el bien.</p>
-        </div>
-        <div class="think-bubble" id="thinkBubble">
-          Moveme
-          <i class="think-dot think-dot-lg"></i>
-          <i class="think-dot think-dot-sm"></i>
+          <!-- Único h1 de la página. El "B&R" se ve en el canvas 3D, que Google
+               no lee: el nombre va como texto accesible (no es texto oculto
+               engañoso, es lo mismo que se ve). -->
+          <h1>
+            <span class="sr-only">B&amp;R Recreación e Inflables: </span>Experiencias
+            recreativas para compartir, jugar y hacer el bien.
+          </h1>
         </div>
         <div class="scroll-cue" aria-hidden="true">
           <span class="scroll-cue-dot"></span>
@@ -34,6 +35,22 @@
 
     <div id="scene"></div>
     <div id="pinHit" class="pin-hit" aria-hidden="true"></div>
+    <!-- Mano "fantasma" que agarra la R y la arrastra un poco: enseña que
+         las letras se mueven. La anima hero3d.js (runGhostDemo). -->
+    <div class="ghost-hand" id="ghostHand" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <g class="ghost-hand-halo">
+          <path d="M18 11V10a2 2 0 0 0-4 0M14 10V9a2 2 0 0 0-4 0v1M10 9.5V4a2 2 0 0 0-4 0v10" />
+          <path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+        </g>
+        <path class="ghost-hand-fill" d="M6 14V4a2 2 0 0 1 4 0v5.5a2 2 0 0 1 4 .5 2 2 0 0 1 4 1 2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15z" />
+        <g class="ghost-hand-line">
+          <path d="M18 11V10a2 2 0 0 0-4 0M14 10V9a2 2 0 0 0-4 0v1M10 9.5V4a2 2 0 0 0-4 0v10" />
+          <path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+        </g>
+      </svg>
+      <span class="ghost-hand-label">Arrastrame</span>
+    </div>
 
     <!-- ================= NOSOTROS ================= -->
     <section id="nosotros">
@@ -303,6 +320,21 @@
       </div>
     </section>
 
+    <!-- ================= ZONAS + PREGUNTAS FRECUENTES =================
+         El contenido lo inyecta src/app/page.tsx desde faq.data.ts (la misma
+         fuente que el JSON-LD). -->
+    <section id="preguntas">
+      <div class="wrap">
+        <p class="kicker reveal">Preguntas frecuentes</p>
+        <h2 class="section-title display reveal">Todo lo que querés saber</h2>
+        <p class="lede reveal">
+          Alquiler de inflables, juegos y animación para eventos en CABA y Zona
+          Norte. Si tu duda no está acá, escribinos por WhatsApp.
+        </p>
+        <div id="faq-root"></div>
+      </div>
+    </section>
+
     <!-- ================= FOOTER ================= -->
     <footer id="contacto">
       <div class="wrap">
@@ -364,6 +396,7 @@
               <li><a href="#proceso">Armá tu combo</a></li>
               <li><a href="#servicios">Experiencias</a></li>
               <li><a href="#juegos">Juegos</a></li>
+              <li><a href="#preguntas">Preguntas frecuentes</a></li>
             </ul>
           </div>
           <div>
@@ -377,7 +410,7 @@
                   >WhatsApp +54 9 11 6538-3672</a
                 >
               </li>
-              <li><a href="#">Buenos Aires, Argentina</a></li>
+              <li>CABA y Zona Norte, Buenos Aires</li>
             </ul>
           </div>
         </div>

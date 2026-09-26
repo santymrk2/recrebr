@@ -1,48 +1,11 @@
-/* Estilos nuevos para el catálogo dinámico y el flujo de reserva.
-   Reutilizan las variables de color definidas en styles.css (--orange,
-   --ink, --card, --line, --text, --text-soft). */
+/* Estilos sumados sobre el sitio original (tarjetas de juegos, mano del
+   hero, hint de scroll). Reutilizan las variables de styles.css. */
 
 .game-photo {
   position: relative;
   overflow: hidden;
   background: var(--card);
 }
-.game-photo-placeholder {
-  width: 100%;
-  height: 100%;
-  background: repeating-linear-gradient(
-    45deg,
-    rgba(255, 122, 0, 0.08),
-    rgba(255, 122, 0, 0.08) 10px,
-    transparent 10px,
-    transparent 20px
-  );
-}
-
-.game-price {
-  font-weight: 700;
-  color: var(--ink);
-  margin: 0.25rem 0 0.75rem;
-}
-.game-price-original {
-  color: var(--text-soft);
-  text-decoration: line-through;
-  font-weight: 400;
-  margin-right: 0.5rem;
-}
-
-.br-catalog-empty {
-  color: var(--text-soft);
-}
-
-/* ---------- Tarjetas destacadas (home): solo foto + nombre ---------- */
-.game-card-featured .game-body {
-  padding: 16px 18px;
-}
-.game-card-featured .game-body h3 {
-  margin: 0;
-}
-
 /* ---------- Tarjetas de juegos (home): toda la card abre WhatsApp ---------- */
 .game-card-wa {
   display: block;
@@ -79,71 +42,63 @@
   font-weight: 700;
 }
 
-/* ---------- Nubecita de pensamiento sobre la letra R ----------
-   --bubble-dx / --bubble-dy corrun la nube respecto de la R: +
-   a la derecha, - hacia arriba. Se ajustan acá si hay que moverla. */
-.think-bubble {
-  --bubble-dx: 78px;
-  --bubble-dy: -40px;
+/* ---------- Mano "fantasma" que enseña a arrastrar las letras ----------
+   La posición, opacidad y "apretón" los escribe hero3d.js en cada frame
+   (--hand-x / --hand-y = punto donde la yema toca la R). */
+.ghost-hand {
+  --hand-size: clamp(56px, 7vw, 76px);
+  --hand-scale: 1;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  width: var(--hand-size);
+  height: var(--hand-size);
+  opacity: 0;
+  pointer-events: none;
+  /* La yema del índice está en (8, 2) del viewBox de 24: ese es el punto
+     que se apoya sobre la letra. */
+  transform: translate3d(
+      calc(var(--hand-x, -200px) - var(--hand-size) * 0.333),
+      calc(var(--hand-y, -200px) - var(--hand-size) * 0.083),
+      0
+    )
+    scale(var(--hand-scale));
+  transform-origin: 33.3% 8.3%;
+  will-change: transform, opacity;
+  filter: drop-shadow(3px 4px 0 rgba(32, 18, 5, 0.18));
+}
+.ghost-hand svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.ghost-hand-halo {
+  stroke: #fff;
+  stroke-width: 4.5;
+}
+.ghost-hand-fill {
+  fill: #fff;
+  stroke: none;
+}
+.ghost-hand-line {
+  stroke: var(--dark);
+  stroke-width: 1.6;
+}
+.ghost-hand-label {
   position: absolute;
-  left: clamp(76px, calc(var(--r-x, 50%) + var(--bubble-dx)), calc(100% - 76px));
-  top: calc(var(--r-top, 34%) + var(--bubble-dy));
-  transform: translate(-50%, -100%);
-  z-index: 4;
-  margin-bottom: 26px;
-  padding: 12px 24px 14px;
+  top: 100%;
+  left: 55%;
+  margin-top: 6px;
+  padding: 5px 12px 6px;
   background: #fff;
   color: var(--dark);
   border: 2px solid var(--dark);
   border-radius: 999px;
-  font-size: clamp(0.9rem, 1.7vw, 1.05rem);
+  font-size: 0.82rem;
   font-weight: 700;
-  text-align: center;
   white-space: nowrap;
-  box-shadow: 5px 6px 0 rgba(32, 18, 5, 0.18);
-  pointer-events: none;
-  animation: think-bob 2.8s ease-in-out infinite;
-}
-.think-bubble.is-hidden {
-  opacity: 0;
-  transition: opacity 0.35s ease;
-}
-.think-dot {
-  position: absolute;
-  background: #fff;
-  border: 2px solid var(--dark);
-  border-radius: 50%;
-}
-/* Los puntitos bajan hacia la R, que quedó abajo-izquierda de la nube. */
-.think-dot-lg {
-  width: 14px;
-  height: 14px;
-  left: 4px;
-  bottom: -21px;
-}
-.think-dot-sm {
-  width: 8px;
-  height: 8px;
-  left: -3px;
-  bottom: -40px;
-}
-@keyframes think-bob {
-  0%,
-  100% {
-    transform: translate(-50%, -100%);
-  }
-  50% {
-    transform: translate(-50%, calc(-100% - 7px));
-  }
-}
-/* En pantallas angostas el offset en px se come el clamp y la nube se pega a
-   la R: se achica la separación. */
-@media (max-width: 720px) {
-  .think-bubble {
-    --bubble-dx: 46px;
-    --bubble-dy: -34px;
-    padding: 10px 18px 12px;
-  }
+  box-shadow: 3px 4px 0 rgba(32, 18, 5, 0.18);
 }
 
 /* ---------- Hint de scroll del hero: punto que sube + "Desliza" ---------- */
@@ -211,259 +166,101 @@
   }
 }
 
-/* ---------- Página /catalogo: header propio con logo animado ---------- */
-.catalogo-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px clamp(20px, 5vw, 56px);
-  border-bottom: 1px solid var(--line);
+/* ---------- Zonas + preguntas frecuentes ---------- */
+#preguntas {
+  background: var(--bg);
 }
-.catalogo-header-logo {
-  text-decoration: none;
+.faq-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) 1.2fr;
+  gap: 28px;
+  margin-top: 3rem;
+  align-items: start;
 }
-.catalogo-header-logo .display {
-  display: inline-block;
-  font-size: 1.6rem;
-  color: var(--orange);
-  animation: catalogo-logo-float 3.6s ease-in-out infinite;
-}
-@keyframes catalogo-logo-float {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-1deg);
-  }
-  50% {
-    transform: translateY(-4px) rotate(1deg);
+@media (max-width: 860px) {
+  .faq-grid {
+    grid-template-columns: 1fr;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .catalogo-header-logo .display {
-    animation: none;
-  }
-}
-
-/* ---------- Explorador de catálogo: filtros + orden ---------- */
-.catalog-explorer {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 32px clamp(20px, 5vw, 56px) 60px;
-}
-.catalog-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 14px;
-  margin-bottom: 2.2rem;
-}
-.catalog-filters input[type="search"],
-.catalog-filters input[type="number"],
-.catalog-filters select {
-  font: inherit;
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
+.faq-zones {
   background: var(--card);
-  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  padding: 28px 24px;
 }
-.catalog-filters > label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.78rem;
+.faq-zones h3 {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+}
+.faq-zones p {
+  margin: 0;
   color: var(--text-soft);
+  line-height: 1.55;
 }
-.catalog-category-pills {
+.zone-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin: 18px 0 22px;
+  padding: 0;
+  list-style: none;
 }
-.catalog-category-pills button {
-  font: inherit;
-  padding: 6px 14px;
+.zone-list li {
+  padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: var(--text-soft);
-  cursor: pointer;
-}
-.catalog-category-pills button.active {
-  background: var(--orange);
-  border-color: var(--orange);
-  color: #fff;
-}
-.catalog-price-range {
-  display: flex;
-  gap: 10px;
-}
-.catalog-price-range label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.78rem;
-  color: var(--text-soft);
-}
-
-/* ---------- Página /catalogo: footer propio (liviano, sin animaciones) ---------- */
-.catalogo-footer {
-  border-top: 1px solid var(--line);
-  padding: 32px clamp(20px, 5vw, 56px) 40px;
-  color: var(--text-soft);
-}
-.catalogo-footer p {
-  margin: 0 0 10px;
-}
-.catalogo-footer a {
-  color: inherit;
-}
-.catalogo-footer-brand {
-  text-decoration: none;
-  font-size: 1.3rem;
-  color: var(--orange);
-}
-
-button.btn-wsp {
-  cursor: pointer;
-  border: none;
-  font: inherit;
-}
-
-/* ---------- Modal de reserva ---------- */
-.br-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  background: rgba(20, 12, 4, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.br-modal {
-  position: relative;
-  width: min(460px, 100%);
-  max-height: 90vh;
-  overflow-y: auto;
-  background: var(--card);
-  border-radius: 20px;
-  padding: 28px 24px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
-}
-.br-modal-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  border: none;
-  background: transparent;
-  font-size: 1.1rem;
-  cursor: pointer;
-  color: var(--text-soft);
-}
-.br-modal h3 {
-  margin: 0 0 12px;
-  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
-  text-transform: uppercase;
+  background: color-mix(in srgb, var(--orange) 12%, transparent);
   color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 700;
 }
-.br-modal-hint {
-  font-size: 0.85rem;
-  color: var(--text-soft);
-  margin: 0 0 10px;
-}
-.br-modal-success p {
-  margin-bottom: 16px;
-}
-.br-modal-error {
-  color: #b3261e;
-  font-size: 0.85rem;
-}
-
-.br-booking-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.br-booking-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.85rem;
-  color: var(--text-soft);
-}
-.br-booking-form input,
-.br-booking-form textarea {
-  font: inherit;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  background: var(--bg);
-  color: var(--text);
-}
-.br-booking-form button[type="submit"] {
-  margin-top: 4px;
-  padding: 10px 16px;
+.faq-cta {
+  display: inline-block;
+  padding: 12px 20px;
   border-radius: 999px;
-  border: none;
   background: var(--orange);
   color: #fff;
   font-weight: 700;
-  cursor: pointer;
+  text-decoration: none;
 }
-.br-booking-form button[type="submit"]:disabled {
-  opacity: 0.6;
-  cursor: default;
+.faq-cta:hover {
+  background: var(--ink);
 }
-
-/* ---------- Calendario ---------- */
-.br-calendar {
+.faq-list {
+  display: grid;
+  gap: 12px;
+}
+.faq-item {
+  background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 12px;
+  border-radius: 20px;
+  padding: 0 22px;
 }
-.br-calendar-header {
+.faq-item summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
-  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
-  color: var(--ink);
-}
-.br-calendar-header button {
-  border: none;
-  background: transparent;
-  font-size: 1.2rem;
+  gap: 16px;
+  padding: 18px 0;
+  font-weight: 700;
   cursor: pointer;
+  list-style: none;
+}
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+.faq-item summary::after {
+  content: "+";
+  flex: none;
   color: var(--orange);
-  padding: 2px 8px;
+  font-size: 1.4rem;
+  line-height: 1;
+  transition: transform 200ms ease;
 }
-.br-calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  text-align: center;
+.faq-item[open] summary::after {
+  transform: rotate(45deg);
 }
-.br-calendar-weekdays {
-  font-size: 0.72rem;
+.faq-item p {
+  margin: 0 0 18px;
   color: var(--text-soft);
-  margin-bottom: 4px;
-}
-.br-calendar-day {
-  aspect-ratio: 1;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-}
-.br-calendar-day:hover:not(.is-disabled) {
-  background: color-mix(in srgb, var(--orange) 16%, transparent);
-}
-.br-calendar-day.is-selected {
-  background: var(--orange);
-  color: #fff;
-}
-.br-calendar-day.is-disabled {
-  color: var(--line);
-  text-decoration: line-through;
-  cursor: not-allowed;
+  line-height: 1.6;
 }

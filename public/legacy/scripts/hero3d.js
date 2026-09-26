@@ -11,6 +11,7 @@
       const sceneRoot = document.querySelector("#scene");
       const pinHit = document.getElementById("pinHit");
       const heroPin = document.querySelector(".hero-pin");
+      const ghostHand = document.getElementById("ghostHand");
       const errorBox = document.querySelector("#error");
 
       let scene, camera, renderer, world;
@@ -80,16 +81,20 @@
       let pinTargetY = 2.1;
       let scrollRise = 0;
       let scrollRiseSmooth = 0;
-      // El aspect de la cámara se congela salvo que cambie el ANCHO real de la
-      // ventana (rotación / redimensionado de escritorio). En móvil, scrollear
-      // sólo cambia innerHeight cuando la barra del navegador se oculta, y eso
-      // disparaba un reproyectado: con el fov vertical fijo, cambiar el aspect
-      // cambia el ancho visible del mundo, los muros laterales se teletransportan
-      // y la física empuja las letras hacia los bordes (vaivén lateral al
-      // scrollear). Congelando el aspect, el ancho del mundo —y por lo tanto los
-      // muros, el pinTargetY y el arrastre— quedan estables ante la barra.
-      let refAspect = 0;
-      let refWidth = 0;
+      /* El canvas mide 100lvh (alto con la barra del navegador OCULTA), no
+         innerHeight. En móvil, scrollear muestra/oculta la barra y cambia
+         innerHeight: reproyectar ahí cambiaba el ancho visible del mundo
+         (muros teletransportados, vaivén lateral), y congelar el aspect sin
+         congelar el canvas estiraba la imagen en vertical. Con un canvas de
+         tamaño estable ni la cámara ni la física se enteran de la barra. */
+      let sceneW = 0;
+      let sceneH = 0;
+      function readSceneSize() {
+        return {
+          w: sceneRoot.clientWidth || innerWidth,
+          h: sceneRoot.clientHeight || innerHeight,
+        };
+      }
       let mobileMenuOpen = false;
 
       document.addEventListener("br:menutoggle", (e) => {
@@ -126,15 +131,10 @@
           await RAPIER.init();
           scene = new THREE.Scene();
 
-          camera = new THREE.PerspectiveCamera(
-            34,
-            innerWidth / innerHeight,
-            0.1,
-            100,
-          );
+          ({ w: sceneW, h: sceneH } = readSceneSize());
+          camera = new THREE.PerspectiveCamera(34, sceneW / sceneH, 0.1, 100);
           camera.position.set(0, 0.15, 9.2);
           camera.lookAt(0, 0, 0);
-          applyCameraProjection();
 
           renderer = new THREE.WebGLRenderer({
             antialias: true,
@@ -144,7 +144,7 @@
           renderer.shadowMap.enabled = true;
           renderer.shadowMap.type = THREE.PCFShadowMap;
           renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-          renderer.setSize(innerWidth, innerHeight);
+          renderer.setSize(sceneW, sceneH);
           renderer.outputColorSpace = THREE.SRGBColorSpace;
           renderer.toneMapping = THREE.NoToneMapping;
           renderer.toneMappingExposure = 1.0;
@@ -573,6 +573,9 @@
       function onPointerDown(event) {
         const item = pickLetter(event);
         if (!item) return;
+        // Un agarre real corta el demo y lo apaga: ya aprendió.
+        if (demo) stopDemo();
+        userHasGrabbed = true;
         dragged = item;
         item.isDragging = true;
         item.returning = false;
@@ -585,11 +588,6 @@
         dragTarget.set(t.x, t.y, 0);
         item.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
         item.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
-        // Aviso real de "agarraron una letra" (no de cualquier toque): lo usa
-        // la nubecita "Moveme" para esconderse.
-        document.dispatchEvent(
-          new CustomEvent("br:lettersgrab", { detail: { text: item.text } }),
-        );
         event.currentTarget.classList.add("dragging");
         event.currentTarget.setPointerCapture?.(event.pointerId);
       }
@@ -622,7 +620,8 @@
       }
 
       function onPointerUp(event) {
-        if (!dragged) return;
+        // Durante el demo `dragged` es la R de la mano, no un drag del usuario.
+        if (!dragged || demo) return;
         const item = dragged;
         item.isDragging = false;
         /* Al soltar se conserva parte de la inercia: frenarla en seco a 0 y
@@ -823,9 +822,6 @@
         // el horizontal quedaba en la mitad de píxeles.
         const padY = (coarsePointer ? 18 : 12) / h;
         const padX = (coarsePointer ? 18 : 12) / w;
-        // El ancla de la nubecita se actualiza siempre: al inicio de la
-        // página el hero todavía no cuenta como "pinned".
-        if (letters.length) updateThinkAnchor(viewportHalfH, padY, h);
         // La banda se queda apagada en el footer y con el menú abierto: es
         // touch-action: none, así que taparla bloquearía el scroll de esa zona.
         if (!letters.length || footerProgress >= 0.02 || mobileMenuOpen) {
@@ -859,25 +855,141 @@
         pinHit.classList.add("active");
       }
 
-      // La nubecita "Moveme" se ancla sobre la letra R: le pasamos su
-      // posición en pantalla para que siga a la letra si se mueve sola.
-      function updateThinkAnchor(viewportHalfH, pad, h) {
-        if (!heroPin) return;
-        const rLetter = letters.find((item) => item.text === "R");
-        if (!rLetter) return;
-        const probe = new THREE.Vector3()
-          .copy(rLetter.mesh.position)
-          .project(camera);
-        const halfH = (rLetter.colliderHalf.hy * rLetter.colliderScale) / viewportHalfH;
-        const w = renderer.domElement.clientWidth || innerWidth;
-        heroPin.style.setProperty(
-          "--r-x",
-          (((probe.x + 1) / 2) * w).toFixed(1) + "px",
+      /* ---------- Demo de la mano fantasma ----------
+         En vez de un cartel "Moveme", una mano agarra la R, la corre un poco y
+         la suelta: la letra vuelve con el mismo resorte que cuando la soltás
+         vos. Enseña la interacción haciéndola. Corre solo arriba de todo del
+         hero, sin menú, sin drag real, y deja de aparecer para siempre (en la
+         sesión) apenas el usuario agarra una letra. Con reduce-motion no corre.
+         Timeline en segundos: entra (0-0.5), aprieta (0.5-0.65), arrastra
+         (0.65-1.55), suelta (1.7) y se va (1.7-2.3). */
+      const DEMO_FIRST_DELAY = 2.2;
+      const DEMO_REPEAT = 12;
+      const DEMO_GRAB = 0.62;
+      const DEMO_DRAG_END = 1.55;
+      const DEMO_RELEASE = 1.7;
+      const DEMO_END = 2.3;
+      const DEMO_OFFSET = new THREE.Vector2(0.55, 0.3);
+      let userHasGrabbed = false;
+      let demoWait = DEMO_FIRST_DELAY;
+      let demo = null;
+      const demoProbe = new THREE.Vector3();
+
+      function demoAllowed() {
+        return (
+          ghostHand &&
+          !reduceMotion &&
+          !userHasGrabbed &&
+          !mobileMenuOpen &&
+          !document.body.classList.contains("is-loading") &&
+          document.visibilityState === "visible" &&
+          scrollY < 8 &&
+          scrollRiseSmooth < 0.02 &&
+          footerProgress <= 0.001
         );
-        heroPin.style.setProperty(
-          "--r-top",
-          (((1 - (probe.y + halfH + pad)) / 2) * h).toFixed(1) + "px",
-        );
+      }
+
+      function releaseDemoLetter() {
+        if (!demo || !demo.grabbed) return;
+        demo.item.isDragging = false;
+        if (dragged === demo.item) dragged = null;
+        demo.grabbed = false;
+      }
+
+      function stopDemo() {
+        releaseDemoLetter();
+        demo = null;
+        demoWait = DEMO_REPEAT;
+        ghostHand.style.opacity = "0";
+      }
+
+      function easeInOut(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      function updateGhostDemo(dt) {
+        if (!ghostHand || !letters.length) return;
+        if (!demo) {
+          if (!demoAllowed() || dragged) {
+            // Cualquier interrupción reinicia la espera: que no aparezca justo
+            // al terminar de scrollear o de soltar una letra.
+            demoWait = Math.max(demoWait, 1.2);
+            return;
+          }
+          demoWait -= dt;
+          if (demoWait > 0) return;
+          const item = letters.find((l) => l.text === "R");
+          if (!item || item.returning) return;
+          demo = { item, t: 0, grabbed: false, start: new THREE.Vector2() };
+        }
+        if (!demoAllowed()) {
+          stopDemo();
+          return;
+        }
+
+        demo.t += dt;
+        const { item } = demo;
+        const t = demo.t;
+
+        if (!demo.grabbed && t >= DEMO_GRAB && t < DEMO_RELEASE) {
+          const p = item.body.translation();
+          demo.start.set(p.x, p.y);
+          dragTarget.set(p.x, p.y, 0);
+          dragged = item;
+          item.isDragging = true;
+          demo.grabbed = true;
+        }
+        if (demo.grabbed) {
+          const k = easeInOut(
+            THREE.MathUtils.clamp((t - DEMO_GRAB) / (DEMO_DRAG_END - DEMO_GRAB), 0, 1),
+          );
+          dragTarget.set(
+            demo.start.x + DEMO_OFFSET.x * k,
+            demo.start.y + DEMO_OFFSET.y * k,
+            0,
+          );
+          if (t >= DEMO_RELEASE) {
+            releaseDemoLetter();
+            item.returning = true;
+          }
+        }
+
+        // La yema se apoya un poco a la derecha y abajo del centro de la R.
+        demoProbe.copy(item.mesh.position);
+        demoProbe.x += item.colliderHalf.hx * item.colliderScale * 0.25;
+        demoProbe.y -= item.colliderHalf.hy * item.colliderScale * 0.15;
+        demoProbe.project(camera);
+        let x = ((demoProbe.x + 1) / 2) * sceneW;
+        let y = ((1 - demoProbe.y) / 2) * sceneH;
+
+        let opacity = 1;
+        let scale = 1;
+        if (t < 0.5) {
+          // Entra desde abajo a la derecha.
+          const k = 1 - easeInOut(t / 0.5);
+          x += 36 * k;
+          y += 48 * k;
+          opacity = 1 - k;
+        } else if (t < DEMO_GRAB + 0.05) {
+          scale = 1 - 0.12 * Math.min(1, (t - 0.5) / 0.12);
+        } else if (t < DEMO_RELEASE) {
+          scale = 0.88;
+        } else {
+          // Suelta: se "abre" y se aleja mientras la letra vuelve sola. Queda
+          // donde soltó, no sigue a la letra de vuelta.
+          const k = easeInOut(Math.min(1, (t - DEMO_RELEASE) / (DEMO_END - DEMO_RELEASE)));
+          if (!demo.releaseAt) demo.releaseAt = { x, y };
+          x = demo.releaseAt.x + 22 * k;
+          y = demo.releaseAt.y + 30 * k;
+          scale = 0.88 + 0.12 * Math.min(1, k * 3);
+          opacity = 1 - k;
+        }
+        ghostHand.style.setProperty("--hand-x", x.toFixed(1) + "px");
+        ghostHand.style.setProperty("--hand-y", y.toFixed(1) + "px");
+        ghostHand.style.setProperty("--hand-scale", scale.toFixed(3));
+        ghostHand.style.opacity = opacity.toFixed(3);
+
+        if (t >= DEMO_END) stopDemo();
       }
 
       function applyFloat(elapsed, dt) {
@@ -924,6 +1036,7 @@
         updateFooterTarget();
         applyPinPosition();
         carryWithHome();
+        updateGhostDemo(delta);
 
         accumulator += delta;
         let steps = 0;
@@ -947,25 +1060,18 @@
         renderer.render(scene, camera);
       }
 
-      function applyCameraProjection() {
-        // Sólo se reproyecta con un aspect nuevo cuando el ancho real cambió
-        // (rotación en móvil, o redimensionar la ventana en escritorio). Un
-        // toggle de la barra del navegador en móvil sólo altera innerHeight, así
-        // que acá se mantiene el aspect previo y el encuadre no se mueve.
-        if (refAspect === 0 || innerWidth !== refWidth) {
-          refAspect = innerWidth / innerHeight;
-          refWidth = innerWidth;
-          camera.aspect = refAspect;
-          camera.updateProjectionMatrix();
-        }
-      }
-
       function onResize() {
-        applyCameraProjection();
-        renderer.setSize(innerWidth, innerHeight);
+        const { w, h } = readSceneSize();
+        if (w !== sceneW || h !== sceneH) {
+          sceneW = w;
+          sceneH = h;
+          camera.aspect = w / h;
+          camera.updateProjectionMatrix();
+          renderer.setSize(w, h);
+          updateBoundaryWalls();
+          computePinTarget();
+        }
         renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-        updateBoundaryWalls();
-        computePinTarget();
         updateScrollProgress();
       }
 

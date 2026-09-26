@@ -1,28 +1,39 @@
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "B&R Recreación e Inflables — La recreación se vive",
-  description:
-    "Juegos, inflables y recreación para cumpleaños, colegios, iglesias y empresas en Buenos Aires.",
-  alternates: { canonical: "/" },
-};
-
 import fs from "node:fs";
 import path from "node:path";
-import { CatalogPortal } from "@/components/CatalogPortal";
-import { GamesGrid } from "@/components/GamesGrid";
+import { renderFaqMarkup } from "@/components/faqMarkup";
+import { renderGamesMarkup } from "@/components/gamesMarkup";
+import { buildFaqJsonLd, buildLocalBusinessJsonLd } from "@/lib/site";
 
 // El hero 3D, el nav flotante, el menú mobile y el footer se traen
 // TAL CUAL del sitio original (public/legacy/markup.html), para no
 // arriesgar romper nada de esas animaciones al portarlas a JSX a mano.
-// La sección "Juegos" es la única parte reemplazada por un mount point
-// (#catalog-root) donde se porta el <GamesGrid> (cada juego abre WhatsApp).
 function readLegacyFile(relativePath: string) {
   return fs.readFileSync(path.join(process.cwd(), "public", "legacy", relativePath), "utf-8");
 }
 
+const CATALOG_MOUNT = '<div class="games-grid" id="catalog-root" data-catalog-root="true"></div>';
+const FAQ_MOUNT = '<div id="faq-root"></div>';
+
+function fillMount(markup: string, mount: string, html: string) {
+  if (!markup.includes(mount)) {
+    throw new Error(`markup.html: no se encontró el mount point ${mount}`);
+  }
+  return markup.replace(mount, mount.replace("></div>", `>${html}</div>`));
+}
+
+// Las tarjetas de juegos y las preguntas frecuentes se renderizan en el
+// servidor DENTRO del markup legado. Antes los juegos se montaban con un
+// portal en useEffect: no venían en el HTML inicial y Google tenía que
+// ejecutar JS para ver el catálogo.
+function buildMarkup() {
+  let markup = readLegacyFile("markup.html");
+  markup = fillMount(markup, CATALOG_MOUNT, renderGamesMarkup());
+  markup = fillMount(markup, FAQ_MOUNT, renderFaqMarkup());
+  return markup;
+}
+
 export default function HomePage() {
-  const markup = readLegacyFile("markup.html");
+  const markup = buildMarkup();
   const criticalCss = readLegacyFile("critical.css");
   const loaderJs = readLegacyFile("scripts/loader.js");
   const interactionsJs = readLegacyFile("scripts/interactions.js");
@@ -34,8 +45,15 @@ export default function HomePage() {
     },
   });
 
+  // `<` escapado: el JSON va dentro de un <script> y no puede cerrarlo.
+  const jsonLd = JSON.stringify([buildLocalBusinessJsonLd(), buildFaqJsonLd()]).replace(
+    /</g,
+    "\\u003c",
+  );
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
       {/* Los <link> de abajo se renderizan al comienzo del <body>, así que el
           navegador los descubre tarde (un request extra) y en el refresh se
           veía la página sin estilos. El CSS crítico va inlineado para que el
@@ -45,9 +63,6 @@ export default function HomePage() {
       <link rel="stylesheet" href="/legacy/catalog-extra.css" />
 
       <div dangerouslySetInnerHTML={{ __html: markup }} />
-      <CatalogPortal>
-        <GamesGrid />
-      </CatalogPortal>
 
       {/* ===== Scripts, en el mismo orden que el sitio original ===== */}
       <script dangerouslySetInnerHTML={{ __html: loaderJs }} />

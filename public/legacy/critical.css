@@ -80,7 +80,6 @@ body.is-loading {
 body.is-loading .hud,
 body.is-loading .wsp-float,
 body.is-loading .hero-caption,
-body.is-loading .think-bubble,
 body.is-loading .scroll-cue,
 body.is-loading .background-type {
   opacity: 0;

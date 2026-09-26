@@ -1,32 +1,5 @@
       document.getElementById("year").textContent = new Date().getFullYear();
 
-      /* -------- La nubecita "Moveme" desaparece al mover las letras -------- */
-      (function thinkBubble() {
-        const bubble = document.getElementById("thinkBubble");
-        if (!bubble) return;
-        const REAPPEAR_MS = 20000;
-        let hidden = false;
-        let timeout = null;
-        const show = () => {
-          clearTimeout(timeout);
-          timeout = null;
-          if (!hidden) return;
-          hidden = false;
-          bubble.classList.remove("is-hidden");
-        };
-        const scheduleNext = () => {
-          clearTimeout(timeout);
-          timeout = setTimeout(show, REAPPEAR_MS);
-        };
-        // hero3d.js dispara esto solo cuando el raycast acierta una letra, así
-        // que un toque en cualquier parte del hero no la esconde.
-        document.addEventListener("br:lettersgrab", () => {
-          bubble.classList.add("is-hidden");
-          hidden = true;
-          scheduleNext();
-        });
-      })();
-
       /* -------- El hint "Desliza" del hero desaparece al primer scroll -------- */
       (function hideScrollCue() {
         const cue = document.querySelector(".scroll-cue");
@@ -214,7 +187,9 @@
         const navLinks = document.querySelectorAll(
           ".bottom-nav a, .drawer-nav a",
         );
-        ["hero-wrap", "nosotros", "proceso", "servicios", "juegos"].forEach(
+        // "preguntas" no tiene link en el nav: está en la lista para que al llegar
+        // ahí se apague el activo anterior en vez de quedar "Experiencias".
+        ["hero-wrap", "nosotros", "proceso", "servicios", "juegos", "preguntas"].forEach(
           (id) => {
             const target = document.getElementById(id);
             if (!target) return;
