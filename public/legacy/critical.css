@@ -1,0 +1,88 @@
+/* ================= CSS CRÍTICO =================
+   Copia intencional de un excerpt de public/legacy/styles.css: SOLO las reglas
+   que necesitan estar aplicadas en el primer paint.
+
+   Por qué existe: los <link rel="stylesheet"> se renderizan al comienzo del
+   <body> (ver src/app/page.tsx), así que el navegador los descubre DESPUÉS de
+   recibir el HTML y necesita un request extra. Durante ese hueco se veía la
+   página entera sin estilos. Inlinando este bloque, el overlay de carga ya
+   aparece con su fondo y su tipografía en el primer frame.
+
+   Si tocás :root, html/body o .loading en styles.css, actualizá este archivo. */
+
+:root {
+  --bg: #fdf8f2;
+  --orange: #ff7a00;
+  --ink: #b34d00;
+  --cyan: #00b4d8;
+  --dark: #201205;
+  --card: #fffaf3;
+  --text: #241505;
+  --text-soft: #7a6a5a;
+  --line: rgba(36, 21, 5, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+html,
+body {
+  width: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+body {
+  position: relative;
+  overflow-x: hidden;
+}
+
+.loading {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: auto;
+  background: #ffffff;
+  transition:
+    opacity 0.5s ease 0.1s,
+    visibility 0.5s ease 0.1s;
+}
+.loading.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.loader-pct {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-size: clamp(2.2rem, 7vw, 3.4rem);
+  letter-spacing: -0.02em;
+  color: var(--orange);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+body.is-loading {
+  overflow: hidden;
+}
+body.is-loading .hud,
+body.is-loading .wsp-float,
+body.is-loading .hero-caption,
+body.is-loading .think-bubble,
+body.is-loading .scroll-cue,
+body.is-loading .background-type {
+  opacity: 0;
+  pointer-events: none;
+}

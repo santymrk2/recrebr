@@ -23,6 +23,7 @@ function readLegacyFile(relativePath: string) {
 
 export default function HomePage() {
   const markup = readLegacyFile("markup.html");
+  const criticalCss = readLegacyFile("critical.css");
   const loaderJs = readLegacyFile("scripts/loader.js");
   const interactionsJs = readLegacyFile("scripts/interactions.js");
 
@@ -35,6 +36,11 @@ export default function HomePage() {
 
   return (
     <>
+      {/* Los <link> de abajo se renderizan al comienzo del <body>, así que el
+          navegador los descubre tarde (un request extra) y en el refresh se
+          veía la página sin estilos. El CSS crítico va inlineado para que el
+          overlay de carga ya salga con fondo y tipografía en el primer paint. */}
+      <style dangerouslySetInnerHTML={{ __html: criticalCss }} />
       <link rel="stylesheet" href="/legacy/styles.css" />
       <link rel="stylesheet" href="/legacy/catalog-extra.css" />
 

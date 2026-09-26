@@ -82,8 +82,8 @@
 /* ---------- Nubecita de pensamiento sobre la letra R ---------- */
 .think-bubble {
   position: absolute;
-  left: clamp(76px, var(--r-x, 50%), calc(100% - 76px));
-  top: var(--r-top, 34%);
+  left: clamp(76px, calc(var(--r-x, 50%) + 24px), calc(100% - 76px));
+  top: calc(var(--r-top, 34%) - 26px);
   transform: translate(-50%, -100%);
   z-index: 4;
   margin-bottom: 26px;

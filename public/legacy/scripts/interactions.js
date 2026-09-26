@@ -4,12 +4,31 @@
       (function thinkBubble() {
         const bubble = document.getElementById("thinkBubble");
         if (!bubble) return;
-        const hide = () => bubble.classList.add("is-hidden");
-        // pinHit y el canvas del #scene son los que enganchan el drag 3D.
+        let hidden = false;
+        let timeout = null;
+        const show = () => {
+          clearTimeout(timeout);
+          timeout = null;
+          if (!hidden) return;
+          hidden = false;
+          bubble.classList.remove("is-hidden");
+        };
+        const scheduleNext = () => {
+          clearTimeout(timeout);
+          timeout = setTimeout(show, 20_000);
+        };
+        // Cada toque esconde la nube y rearma el timer: si la persona se
+        // olvida de las letras, a los 20s vuelve a aparecer sola.
         for (const id of ["pinHit", "scene"]) {
-          document
-            .getElementById(id)
-            ?.addEventListener("pointerdown", hide, { passive: true, once: true });
+          document.getElementById(id)?.addEventListener(
+            "pointerdown",
+            () => {
+              bubble.classList.add("is-hidden");
+              hidden = true;
+              scheduleNext();
+            },
+            { passive: true },
+          );
         }
       })();
 
