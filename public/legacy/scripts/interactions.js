@@ -1,20 +1,15 @@
       document.getElementById("year").textContent = new Date().getFullYear();
 
-      /* -------- La nubecita de las letras cambia de texto al moverlas -------- */
+      /* -------- La nubecita "Moveme" desaparece al mover las letras -------- */
       (function thinkBubble() {
         const bubble = document.getElementById("thinkBubble");
-        const text = bubble?.querySelector(".think-bubble-text");
-        if (!bubble || !text) return;
-        const swap = () => {
-          if (bubble.classList.contains("is-moved")) return;
-          text.textContent = "¡Podés jugar y divertirte!";
-          bubble.classList.add("is-moved");
-        };
+        if (!bubble) return;
+        const hide = () => bubble.classList.add("is-hidden");
         // pinHit y el canvas del #scene son los que enganchan el drag 3D.
         for (const id of ["pinHit", "scene"]) {
           document
             .getElementById(id)
-            ?.addEventListener("pointerdown", swap, { passive: true });
+            ?.addEventListener("pointerdown", hide, { passive: true, once: true });
         }
       })();
 

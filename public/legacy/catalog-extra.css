@@ -79,13 +79,14 @@
   font-weight: 700;
 }
 
-/* ---------- Nubecita de pensamiento de las letras del hero ---------- */
+/* ---------- Nubecita de pensamiento sobre la letra R ---------- */
 .think-bubble {
   position: absolute;
-  left: 50%;
-  bottom: 57%;
-  transform: translateX(-50%);
+  left: clamp(76px, var(--r-x, 50%), calc(100% - 76px));
+  top: var(--r-top, 34%);
+  transform: translate(-50%, -100%);
   z-index: 4;
+  margin-bottom: 26px;
   padding: 12px 24px 14px;
   background: #fff;
   color: var(--dark);
@@ -98,6 +99,10 @@
   box-shadow: 5px 6px 0 rgba(32, 18, 5, 0.18);
   pointer-events: none;
   animation: think-bob 2.8s ease-in-out infinite;
+}
+.think-bubble.is-hidden {
+  opacity: 0;
+  transition: opacity 0.35s ease;
 }
 .think-dot {
   position: absolute;
@@ -117,32 +122,13 @@
   left: 28%;
   bottom: -40px;
 }
-.think-bubble.is-moved .think-bubble-text {
-  animation: think-pop 0.45s ease;
-}
 @keyframes think-bob {
   0%,
   100% {
-    transform: translateX(-50%) translateY(0);
+    transform: translate(-50%, -100%);
   }
   50% {
-    transform: translateX(-50%) translateY(-7px);
-  }
-}
-@keyframes think-pop {
-  0% {
-    transform: scale(0.82);
-  }
-  55% {
-    transform: scale(1.12);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-@media (max-width: 600px) {
-  .think-bubble {
-    bottom: 62%;
+    transform: translate(-50%, calc(-100% - 7px));
   }
 }
 

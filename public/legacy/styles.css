@@ -165,11 +165,12 @@
       .hero-caption {
         position: absolute;
         left: 50%;
-        bottom: 9%;
+        top: 7%;
         transform: translateX(-50%);
         z-index: 2;
         text-align: center;
         pointer-events: none;
+        width: min(720px, 88vw);
       }
       .hero-caption p {
         margin: 0;
@@ -866,6 +867,11 @@
         font-size: 2.4rem;
         color: var(--orange);
         margin-bottom: 10px;
+      }
+      /* La "B&R" naranja del footer es solo el anchor que mide hero3d.js para
+         posar las letras 3D: conserva layout pero no se pinta. */
+      #footBrandText {
+        visibility: hidden;
       }
       .foot-brand p {
         color: var(--text-soft);

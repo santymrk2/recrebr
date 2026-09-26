@@ -10,6 +10,7 @@
 
       const sceneRoot = document.querySelector("#scene");
       const pinHit = document.getElementById("pinHit");
+      const heroPin = document.querySelector(".hero-pin");
       const errorBox = document.querySelector("#error");
 
       let scene, camera, renderer, world;
@@ -28,9 +29,9 @@
       const PIN_TOP_MARGIN = 0.5;
       const PIN_SHRINK = 0.5;
       const PIN_SPREAD = 0.42;
-      const PIN_FLOAT_Y = 0.075;
-      const PIN_FLOAT_X = 0.024;
-      const PIN_FLOAT_TILT = 0.017;
+      const PIN_FLOAT_Y = 0.034;
+      const PIN_FLOAT_X = 0.011;
+      const PIN_FLOAT_TILT = 0.008;
       const PIN_FLOAT_SPEED = 1.2;
       const HERO_FLOAT = 0.6;
       const PIN_TILT_DOWN = 0.4;
@@ -236,6 +237,7 @@
           mesh,
           body,
           collider,
+          text: spec.text,
           colliderHalf: { hx, hy, hz },
           colliderScale: 1,
           floatPhase: letters.length * 2.1,
@@ -368,10 +370,10 @@
             const ease = b * b;
             const bounds = getViewportBounds();
             const flyY =
-              bounds.top + item.colliderHalf.hy * scaleA + 1.2;
+              bounds.top + item.colliderHalf.hy * scaleA + 0.45;
             y = yA + (flyY - yA) * ease;
-            x = xA * (1 + 0.22 * ease);
-            scale = scaleA * (1 + 0.1 * ease);
+            x = xA * (1 + 0.09 * ease);
+            scale = scaleA * (1 + 0.04 * ease);
             f = 0;
           } else {
             x = xA;
@@ -694,6 +696,14 @@
       }
 
       function updatePinHit() {
+        const viewportHalfH =
+          Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) *
+          camera.position.z;
+        const h = renderer.domElement.clientHeight || innerHeight;
+        const pad = 12 / h;
+        // El ancla de la nubecita se actualiza siempre: al inicio de la
+        // página el hero todavía no cuenta como "pinned".
+        if (letters.length) updateThinkAnchor(viewportHalfH, pad, h);
         const pinned =
           scrollRiseSmooth > 0.999 &&
           footerProgress < 0.02 &&
@@ -703,11 +713,6 @@
           return;
         }
         const probe = new THREE.Vector3();
-        const viewportHalfH =
-          Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) *
-          camera.position.z;
-        const h = renderer.domElement.clientHeight || innerHeight;
-        const pad = 12 / h;
         let top = 1,
           bottom = -1;
         for (const item of letters) {
@@ -724,11 +729,34 @@
         pinHit.classList.add("active");
       }
 
+      // La nubecita "Moveme" se ancla sobre la letra R: le pasamos su
+      // posición en pantalla para que siga a la letra si se mueve sola.
+      function updateThinkAnchor(viewportHalfH, pad, h) {
+        if (!heroPin) return;
+        const rLetter = letters.find((item) => item.text === "R");
+        if (!rLetter) return;
+        const probe = new THREE.Vector3()
+          .copy(rLetter.mesh.position)
+          .project(camera);
+        const halfH = (rLetter.colliderHalf.hy * rLetter.colliderScale) / viewportHalfH;
+        const w = renderer.domElement.clientWidth || innerWidth;
+        heroPin.style.setProperty(
+          "--r-x",
+          (((probe.x + 1) / 2) * w).toFixed(1) + "px",
+        );
+        heroPin.style.setProperty(
+          "--r-top",
+          (((1 - (probe.y + halfH + pad)) / 2) * h).toFixed(1) + "px",
+        );
+      }
+
       function applyFloat(elapsed) {
+        // El flotado nunca llega a 0 en el footer: las letras quedan vivas
+        // pero sin movimiento notorio.
         const amp = reduceMotion
           ? 0
           : (HERO_FLOAT + (1 - HERO_FLOAT) * scrollRiseSmooth) *
-            (1 - footerProgress);
+            (1 - footerProgress * 0.82);
         if (amp < 0.001) return;
         for (const item of letters) {
           const w =
@@ -759,11 +787,6 @@
         scrollRiseSmooth +=
           (scrollRise - scrollRiseSmooth) * Math.min(1, delta * 7);
         updateFooterTarget();
-        if (footBrand) {
-          footBrand.style.opacity = String(
-            Math.max(0, 1 - footerProgress / 0.8),
-          );
-        }
         applyPinPosition();
         updateReturningLetters(delta);
         world.timestep = delta;
