@@ -979,6 +979,7 @@
       }
       .wsp-float,
       .hero-caption,
+      .think-bubble,
       .scroll-cue,
       .background-type {
         transition: opacity 0.6s ease 0.25s;
@@ -986,6 +987,7 @@
       body.is-loading .hud,
       body.is-loading .wsp-float,
       body.is-loading .hero-caption,
+      body.is-loading .think-bubble,
       body.is-loading .scroll-cue,
       body.is-loading .background-type {
         opacity: 0;

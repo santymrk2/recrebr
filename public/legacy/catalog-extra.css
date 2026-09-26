@@ -79,6 +79,73 @@
   font-weight: 700;
 }
 
+/* ---------- Nubecita de pensamiento de las letras del hero ---------- */
+.think-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: 57%;
+  transform: translateX(-50%);
+  z-index: 4;
+  padding: 12px 24px 14px;
+  background: #fff;
+  color: var(--dark);
+  border: 2px solid var(--dark);
+  border-radius: 999px;
+  font-size: clamp(0.9rem, 1.7vw, 1.05rem);
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 5px 6px 0 rgba(32, 18, 5, 0.18);
+  pointer-events: none;
+  animation: think-bob 2.8s ease-in-out infinite;
+}
+.think-dot {
+  position: absolute;
+  background: #fff;
+  border: 2px solid var(--dark);
+  border-radius: 50%;
+}
+.think-dot-lg {
+  width: 14px;
+  height: 14px;
+  left: 36%;
+  bottom: -21px;
+}
+.think-dot-sm {
+  width: 8px;
+  height: 8px;
+  left: 28%;
+  bottom: -40px;
+}
+.think-bubble.is-moved .think-bubble-text {
+  animation: think-pop 0.45s ease;
+}
+@keyframes think-bob {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-7px);
+  }
+}
+@keyframes think-pop {
+  0% {
+    transform: scale(0.82);
+  }
+  55% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@media (max-width: 600px) {
+  .think-bubble {
+    bottom: 62%;
+  }
+}
+
 /* ---------- Hint de scroll del hero: punto que sube + "Desliza" ---------- */
 .scroll-cue {
   position: absolute;
