@@ -30,7 +30,7 @@
          con world.timestep = delta del frame, cada paso duraba distinto (60/120
          Hz, frames perdidos) y las letras avanzaban a saltos irregulares. */
       const STEP = 1 / 120;
-      const MAX_STEPS = 8;
+      const MAX_STEPS = 12;
       let accumulator = 0;
       // El drag sigue al puntero con un filtro exponencial por paso, no con la
       // velocidad del último pointermove (que se quedaba pegada si en un frame
@@ -46,7 +46,7 @@
 
       const heroWrap = document.getElementById("hero-wrap");
       const PIN_TOP_MARGIN = 0.5;
-      const PIN_TOP_MARGIN_COARSE = 1.15;
+      const PIN_TOP_MARGIN_COARSE = 0.95;
       const PIN_SHRINK = 0.5;
       const PIN_SPREAD = 0.42;
       const PIN_FLOAT_Y = 0.034;
@@ -80,6 +80,16 @@
       let pinTargetY = 2.1;
       let scrollRise = 0;
       let scrollRiseSmooth = 0;
+      // El aspect de la cámara se congela salvo que cambie el ANCHO real de la
+      // ventana (rotación / redimensionado de escritorio). En móvil, scrollear
+      // sólo cambia innerHeight cuando la barra del navegador se oculta, y eso
+      // disparaba un reproyectado: con el fov vertical fijo, cambiar el aspect
+      // cambia el ancho visible del mundo, los muros laterales se teletransportan
+      // y la física empuja las letras hacia los bordes (vaivén lateral al
+      // scrollear). Congelando el aspect, el ancho del mundo —y por lo tanto los
+      // muros, el pinTargetY y el arrastre— quedan estables ante la barra.
+      let refAspect = 0;
+      let refWidth = 0;
       let mobileMenuOpen = false;
 
       document.addEventListener("br:menutoggle", (e) => {
@@ -124,6 +134,7 @@
           );
           camera.position.set(0, 0.15, 9.2);
           camera.lookAt(0, 0, 0);
+          applyCameraProjection();
 
           renderer = new THREE.WebGLRenderer({
             antialias: true,
@@ -305,7 +316,7 @@
       }
 
       function updateScrollProgress() {
-        const max = Math.max(heroWrap.offsetHeight - innerHeight, 1);
+        const max = Math.max(heroWrap.offsetHeight - heroPin.offsetHeight, 1);
         const t = Math.min(scrollY / (max * 0.9), 1);
         scrollRise = t * t * (3 - 2 * t);
         sceneRoot.classList.toggle("is-interactive", scrollY < max);
@@ -936,9 +947,21 @@
         renderer.render(scene, camera);
       }
 
+      function applyCameraProjection() {
+        // Sólo se reproyecta con un aspect nuevo cuando el ancho real cambió
+        // (rotación en móvil, o redimensionar la ventana en escritorio). Un
+        // toggle de la barra del navegador en móvil sólo altera innerHeight, así
+        // que acá se mantiene el aspect previo y el encuadre no se mueve.
+        if (refAspect === 0 || innerWidth !== refWidth) {
+          refAspect = innerWidth / innerHeight;
+          refWidth = innerWidth;
+          camera.aspect = refAspect;
+          camera.updateProjectionMatrix();
+        }
+      }
+
       function onResize() {
-        camera.aspect = innerWidth / innerHeight;
-        camera.updateProjectionMatrix();
+        applyCameraProjection();
         renderer.setSize(innerWidth, innerHeight);
         renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
         updateBoundaryWalls();
