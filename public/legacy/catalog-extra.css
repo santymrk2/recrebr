@@ -79,11 +79,15 @@
   font-weight: 700;
 }
 
-/* ---------- Nubecita de pensamiento sobre la letra R ---------- */
+/* ---------- Nubecita de pensamiento sobre la letra R ----------
+   --bubble-dx / --bubble-dy corrun la nube respecto de la R: +
+   a la derecha, - hacia arriba. Se ajustan acá si hay que moverla. */
 .think-bubble {
+  --bubble-dx: 62px;
+  --bubble-dy: -56px;
   position: absolute;
-  left: clamp(76px, calc(var(--r-x, 50%) + 24px), calc(100% - 76px));
-  top: calc(var(--r-top, 34%) - 26px);
+  left: clamp(76px, calc(var(--r-x, 50%) + var(--bubble-dx)), calc(100% - 76px));
+  top: calc(var(--r-top, 34%) + var(--bubble-dy));
   transform: translate(-50%, -100%);
   z-index: 4;
   margin-bottom: 26px;
@@ -110,16 +114,17 @@
   border: 2px solid var(--dark);
   border-radius: 50%;
 }
+/* Los puntitos bajan hacia la R, que quedó abajo-izquierda de la nube. */
 .think-dot-lg {
   width: 14px;
   height: 14px;
-  left: 36%;
+  left: 4px;
   bottom: -21px;
 }
 .think-dot-sm {
   width: 8px;
   height: 8px;
-  left: 28%;
+  left: -3px;
   bottom: -40px;
 }
 @keyframes think-bob {
