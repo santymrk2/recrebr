@@ -48,7 +48,7 @@ export function buildLocalBusinessJsonLd() {
     description: site.description,
     url: site.url,
     image: `${site.url}/opengraph-image`,
-    logo: `${site.url}/icon`,
+    logo: `${site.url}/icon.png`,
     telephone: site.phone,
     priceRange: "$$",
     address: {
