@@ -336,6 +336,34 @@
          anclara al span, el descenso entero quedaba comprimido en los últimos
          ~280px de scroll y las letras quedaban "volando a media altura". */
       const footerEl = document.querySelector("footer");
+
+      /* Con las letras posadas en el footer, el canvas deja de ser fixed y se
+         ancla al documento: scrollea junto al footer de la mano del
+         compositor. Fixed, las letras seguían al footer midiendo su rect en
+         cada frame y en el celular llegaban un frame tarde (saltitos). El
+         cambio cae en BALLOON_END, cuando las letras están fuera de pantalla. */
+      let sceneDocked = false;
+      function setSceneDocked(docked) {
+        if (docked === sceneDocked) return;
+        sceneDocked = docked;
+        if (!docked) {
+          sceneRoot.style.position = "";
+          sceneRoot.style.top = "";
+          return;
+        }
+        const h = sceneH || innerHeight;
+        const docH = document.documentElement.scrollHeight;
+        const footerDocTop = footerEl.getBoundingClientRect().top + scrollY;
+        // Un poco por encima del footer, sin pasarse del final del documento
+        // (si no, el canvas estiraría la página y cambiaría el scroll).
+        const top = Math.max(
+          0,
+          Math.min(footerDocTop - h * 0.25, docH - h),
+        );
+        sceneRoot.style.position = "absolute";
+        sceneRoot.style.top = top + "px";
+      }
+
       function updateFooterTarget() {
         if (!footBrand || !letters.length || !footerEl) {
           footerProgress = 0;
@@ -355,6 +383,7 @@
             1,
           );
         }
+        setSceneDocked(footerProgress >= BALLOON_END && !mobileMenuOpen);
         if (footerProgress <= 0.001) return;
 
         screenToWorld(rect.left + rect.width / 2, rect.top + rect.height / 2, footerTarget);
@@ -1070,6 +1099,9 @@
           renderer.setSize(w, h);
           updateBoundaryWalls();
           computePinTarget();
+          // El ancla depende del alto del canvas y del documento: se recalcula
+          // en el próximo frame.
+          setSceneDocked(false);
         }
         renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
         updateScrollProgress();
