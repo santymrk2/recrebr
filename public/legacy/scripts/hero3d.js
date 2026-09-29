@@ -47,7 +47,7 @@
 
       const heroWrap = document.getElementById("hero-wrap");
       const PIN_TOP_MARGIN = 0.5;
-      const PIN_TOP_MARGIN_COARSE = 0.95;
+      const PIN_TOP_MARGIN_COARSE = 0.7;
       const PIN_SHRINK = 0.5;
       const PIN_SPREAD = 0.42;
       const PIN_FLOAT_Y = 0.034;
