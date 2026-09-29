@@ -738,16 +738,12 @@
       body.has-icon3d .icon3d svg {
         display: none;
       }
-      #icon3d-layer {
-        position: fixed;
+      .icon3d-canvas {
+        position: absolute;
         inset: 0;
-        z-index: 2;
+        width: 100%;
+        height: 100%;
         pointer-events: none;
-        cursor: default;
-        display: none;
-      }
-      body.has-icon3d #icon3d-layer {
-        display: block;
       }
       .service h3 {
         margin: 0 0 6px;

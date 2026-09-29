@@ -25,6 +25,49 @@
 .game-card-wa .game-body p {
   margin: 0 0 10px;
 }
+/* Con foto: la imagen llena la card y el número queda como sticker arriba. */
+.game-photo.has-photo {
+  height: 210px;
+}
+.game-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 400ms ease;
+}
+.game-card-wa:hover .game-photo img {
+  transform: scale(1.05);
+}
+.game-photo.has-photo .game-photo-index {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  padding: 4px 10px 2px;
+  border-radius: 12px;
+  background: var(--tone);
+  color: #fff;
+  font-size: 1.4rem;
+  opacity: 1;
+  box-shadow: 3px 4px 0 rgba(32, 18, 5, 0.18);
+}
+@media (prefers-reduced-motion: reduce) {
+  .game-card-wa:hover .game-photo img {
+    transform: none;
+  }
+}
+
+/* ---------- Foto del matrimonio en "Quiénes somos" ---------- */
+.story-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  margin-bottom: 1.4rem;
+  border-radius: 22px 8px 22px 8px;
+}
 .game-photo-index {
   font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
   font-size: 2.6rem;

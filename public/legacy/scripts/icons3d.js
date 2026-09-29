@@ -26,21 +26,21 @@
         initIconLayer().catch((err) => console.warn("icon3d:", err));
       }
 
+      // Cada ícono se dibuja en un <canvas> 2D DENTRO de su tarjeta, así se
+      // mueve con el scroll nativo. Antes era un canvas fixed de pantalla
+      // completa que seguía a las tarjetas con getBoundingClientRect en cada
+      // frame: en el celular el scroll lo mueve el compositor antes de que
+      // corra JS, y los íconos llegaban un frame tarde (tirones).
+      // Un solo WebGLRenderer offscreen dibuja cada ícono y se copia con
+      // drawImage: los móviles limitan la cantidad de contextos WebGL.
       async function initIconLayer() {
-        const canvas = document.createElement("canvas");
-        canvas.id = "icon3d-layer";
-        document.body.appendChild(canvas);
-
         const renderer = new THREE.WebGLRenderer({
-          canvas,
           antialias: true,
           alpha: true,
           powerPreference: "high-performance",
         });
-        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-        renderer.setSize(innerWidth, innerHeight);
         renderer.outputColorSpace = THREE.SRGBColorSpace;
-        renderer.autoClear = false;
+        renderer.setClearColor(0x000000, 0);
 
         const pmrem = new THREE.PMREMGenerator(renderer);
         envTexture = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -49,18 +49,25 @@
         const items = [];
         for (const el of slots) {
           const geometry = await loadIconGeometry(el.dataset.icon);
-          const { scene, camera, group, material } = makeIconScene(
+          const { scene, camera, group } = makeIconScene(
             geometry,
             el.dataset.color || ICON_COLOR,
             envTexture,
           );
+          const canvas = document.createElement("canvas");
+          canvas.className = "icon3d-canvas";
+          canvas.setAttribute("aria-hidden", "true");
+          el.appendChild(canvas);
           items.push({
             el,
+            canvas,
+            ctx: canvas.getContext("2d"),
             scene,
             camera,
             group,
-            material,
-            reveal: el.closest(".reveal, .step-block"),
+            visible: false,
+            w: 0,
+            h: 0,
             phase: Math.random() * Math.PI * 2,
             tiltX: 0.34 + (Math.random() - 0.5) * 0.12,
             tiltY: 0.5 + (Math.random() - 0.5) * 0.3,
@@ -79,53 +86,54 @@
 
         if (!items.length) return;
 
-        addEventListener("resize", onResize);
-        requestAnimationFrame(tick);
+        const byEl = new Map(items.map((item) => [item.el, item]));
+        const pixelRatio = () => Math.min(devicePixelRatio, 2);
+        let dirty = true;
 
-        function onResize() {
-          renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-          renderer.setSize(innerWidth, innerHeight);
+        // Tamaños por ResizeObserver y visibilidad por IntersectionObserver:
+        // nada de leer layout dentro del loop.
+        const sizeObserver = new ResizeObserver((entries) => {
+          const pr = pixelRatio();
+          for (const entry of entries) {
+            const item = byEl.get(entry.target);
+            item.w = entry.contentRect.width;
+            item.h = entry.contentRect.height;
+            item.canvas.width = Math.round(item.w * pr);
+            item.canvas.height = Math.round(item.h * pr);
+          }
+          // El buffer compartido tiene que alcanzar para el ícono más grande.
+          const maxW = Math.max(...items.map((item) => item.w));
+          const maxH = Math.max(...items.map((item) => item.h));
+          renderer.setPixelRatio(pr);
+          renderer.setSize(maxW, maxH, false);
+          dirty = true;
+        });
+        const viewObserver = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            byEl.get(entry.target).visible = entry.isIntersecting;
+          }
+          dirty = true;
+        });
+        for (const item of items) {
+          sizeObserver.observe(item.el);
+          viewObserver.observe(item.el);
         }
 
         const timer = new THREE.Timer();
+        requestAnimationFrame(tick);
 
         function tick() {
           requestAnimationFrame(tick);
+          // Sin movimiento, se redibuja solo si cambió tamaño o visibilidad.
+          if (reduceMotion && !dirty) return;
+          dirty = false;
           timer.update();
           const t = timer.getElapsed();
-
-          renderer.setScissorTest(false);
-          renderer.setViewport(0, 0, innerWidth, innerHeight);
-          renderer.clear();
-          renderer.setScissorTest(true);
-
-          const canvasRect = renderer.domElement.getBoundingClientRect();
+          const pr = pixelRatio();
+          const source = renderer.domElement;
 
           for (const item of items) {
-            const rect = item.el.getBoundingClientRect();
-            const w = rect.width;
-            const h = rect.height;
-            if (w < 2 || h < 2) continue;
-            if (
-              rect.bottom <= 0 ||
-              rect.top >= innerHeight ||
-              rect.right <= 0 ||
-              rect.left >= innerWidth
-            ) {
-              continue;
-            }
-
-            let opacity = 1;
-            if (item.reveal) {
-              const o = parseFloat(getComputedStyle(item.reveal).opacity);
-              opacity = Number.isFinite(o) ? o : 1;
-            }
-            if (opacity <= 0.02) continue;
-
-            item.group.visible = true;
-            item.group.scale.setScalar(0.72 + 0.28 * opacity);
-            item.material.opacity = opacity;
-            item.material.transparent = opacity < 0.99;
+            if (!item.visible || item.w < 2 || item.h < 2) continue;
 
             if (reduceMotion) {
               item.group.rotation.set(item.tiltX, item.tiltY, 0);
@@ -136,15 +144,28 @@
                 item.tiltY + Math.sin(t * 0.7 + item.phase) * 0.26;
             }
 
-            const left = rect.left - canvasRect.left;
-            const bottom = innerHeight - (rect.bottom - canvasRect.top);
-
-            item.camera.aspect = w / h;
+            item.camera.aspect = item.w / item.h;
             item.camera.updateProjectionMatrix();
 
-            renderer.setViewport(left, bottom, w, h);
-            renderer.setScissor(left, bottom, w, h);
+            // El viewport de WebGL arranca abajo a la izquierda; drawImage
+            // mide desde arriba, por eso el recorte sale del fondo del buffer.
+            renderer.setViewport(0, 0, item.w, item.h);
             renderer.render(item.scene, item.camera);
+
+            const sw = item.w * pr;
+            const sh = item.h * pr;
+            item.ctx.clearRect(0, 0, item.canvas.width, item.canvas.height);
+            item.ctx.drawImage(
+              source,
+              0,
+              source.height - sh,
+              sw,
+              sh,
+              0,
+              0,
+              item.canvas.width,
+              item.canvas.height,
+            );
           }
         }
       }
