@@ -13,6 +13,40 @@
         );
       })();
 
+      /* -------- Degradé superior: solo una vez que se empezó a scrollear -------- */
+      (function toggleTopFade() {
+        let scrolled = null;
+        const update = () => {
+          const next = scrollY > 40;
+          if (next === scrolled) return;
+          scrolled = next;
+          document.body.classList.toggle("has-scrolled", next);
+        };
+        addEventListener("scroll", update, { passive: true });
+        update();
+      })();
+
+      /* -------- Barra de progreso: respaldo sin animation-timeline -------- */
+      (function scrollProgressFallback() {
+        const bar = document.querySelector(".scroll-progress");
+        if (!bar || CSS.supports("animation-timeline: scroll()")) return;
+        let queued = false;
+        const update = () => {
+          queued = false;
+          const max = document.documentElement.scrollHeight - innerHeight;
+          const p = max > 0 ? Math.min(Math.max(scrollY / max, 0), 1) : 0;
+          bar.style.setProperty("--scroll-progress", p.toFixed(4));
+        };
+        const queue = () => {
+          if (queued) return;
+          queued = true;
+          requestAnimationFrame(update);
+        };
+        addEventListener("scroll", queue, { passive: true });
+        addEventListener("resize", queue);
+        update();
+      })();
+
       /* -------- Ocultar el navbar al llegar al footer -------- */
       (function hideNavOnFooter() {
         const hud = document.querySelector(".hud");

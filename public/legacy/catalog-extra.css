@@ -85,6 +85,65 @@
   font-weight: 700;
 }
 
+/* ---------- Barra de progreso del scroll, pegada arriba ----------
+   Con animation-timeline la mueve el compositor junto con el scroll (sin
+   JS por frame, sin tirones en el celular). Donde no hay soporte,
+   interactions.js escribe --scroll-progress. */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 55;
+  width: 100%;
+  height: 4px;
+  background: var(--orange);
+  transform: scaleX(var(--scroll-progress, 0));
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    animation: scroll-progress linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+@keyframes scroll-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ---------- Degradé superior ----------
+   Entre el contenido (z-index 1) y el canvas de las letras 3D (3): el texto
+   se funde con el fondo al subir y las letras fijadas arriba quedan nítidas.
+   Varias paradas para que el degradé no haga escalones. Aparece recién al
+   scrollear (interactions.js) para no lavar el hero. */
+.top-fade {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: 100%;
+  height: calc(96px + env(safe-area-inset-top));
+  background: linear-gradient(
+    to bottom,
+    var(--bg) 0%,
+    color-mix(in srgb, var(--bg) 88%, transparent) 25%,
+    color-mix(in srgb, var(--bg) 55%, transparent) 55%,
+    color-mix(in srgb, var(--bg) 20%, transparent) 80%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+}
+body.has-scrolled .top-fade {
+  opacity: 1;
+}
+
 /* ---------- Mano "fantasma" que enseña a arrastrar las letras ----------
    La posición, opacidad y "apretón" los escribe hero3d.js en cada frame
    (--hand-x / --hand-y = punto donde la yema toca la R). */
